@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar-background: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --color-sidebar: var(--sidebar);
+  --color-surface-raised: var(--surface-raised);
+  --color-amber: var(--amber);
+  --color-warning: var(--amber);
+
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* ── Premium dark palette — Obsidian Holographic Neon Carbon ── */
+  --surface-0: #05080b;
+  --surface-1: #0a1013;
+  --surface-2: #0f191f;
+  --line: #13222a;
+  --line-subtle: #0d171d;
+  --line-strong: #1e3643;
+  --surface-raised: #0b1216;
+
+  --amber: #f59e0b;
+  --text-primary: #e1edf3;
+  --text-secondary: #92aab7;
+  --text-muted: #5e7785;
+
+  --background: #05080b;
+  --foreground: #e1edf3;
+
+  --card: #0a1013;
+  --card-foreground: #e1edf3;
+  --popover: #0a1013;
+  --popover-foreground: #e1edf3;
+
+  /* Electric Neon Mint */
+  --primary: #05f3a2;
+  --primary-foreground: #030f0a;
+
+  --secondary: #0f191f;
+  --secondary-foreground: #e1edf3;
+
+  --muted: #0f191f;
+  --muted-foreground: #5e7785;
+
+  --accent: #05f3a2;
+  --accent-foreground: #030f0a;
+
+  --destructive: #f43f5e;
+  --destructive-foreground: #e1edf3;
+
+  --border: #13222a;
+  --input: #13222a;
+  --ring: #05f3a2;
+
+  --sidebar-background: #05080b;
+  --sidebar-foreground: #e1edf3;
+  --sidebar-primary: #05f3a2;
+  --sidebar-primary-foreground: #030f0a;
+  --sidebar-accent: #0a1013;
+  --sidebar-accent-foreground: #e1edf3;
+  --sidebar-border: #13222a;
+  --sidebar-ring: #05f3a2;
+
+  --sidebar: #05080b;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+[role="button"],
+select,
+input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+  cursor: pointer;
+}
+
+/* ── Utility classes ───────────────────────────── */
+
+/* Stat number — tabular, clean */
+@utility stat {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+/* Fade-in-up page transition */
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.4s var(--ease-soft) both;
+}
+
+/* Staggered children fade-in */
+@utility animate-stagger {
+  animation: fade-in-up 0.4s var(--ease-soft) both;
+}
+
+/* Subtle bottom border separator for header */
+@utility border-separator {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Glass card — premium frosted surface */
+@utility glass {
+  background: linear-gradient(135deg, rgba(13, 20, 17, 0.7), rgba(7, 11, 15, 0.85));
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+
+/* Glass surface with emerald tint — for hero/featured areas */
+@utility glass-accent {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(7, 11, 15, 0.9) 40%);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+}
+
+/* Inner glow — premium edge highlight */
+@utility inner-glow {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Ambient emerald glow — positioned absolutely behind content */
+@utility ambient-glow {
+  position: relative;
+}
+
+/* Premium border — subtle highlight */
+@utility border-premium {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Active nav indicator */
+@utility nav-active {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.04));
+  border-left: 2px solid var(--accent);
+}
+
+/* Premium stat number */
+@utility stat-premium {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #e2e8f0;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
