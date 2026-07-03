@@ -55,7 +55,10 @@ describe('SecretEncryptionService', () => {
 
   it('throws on corrupted ciphertext', () => {
     const encrypted = service.encrypt('secret', mockWorkspaceKey);
-    const badCiphertext = encrypted.ciphertext.slice(0, -2) + '00';
+    const badCiphertext =
+      encrypted.ciphertext[0] === '0'
+        ? '1' + encrypted.ciphertext.slice(1)
+        : '0' + encrypted.ciphertext.slice(1);
     expect(() =>
       service.decrypt(badCiphertext, encrypted.iv, encrypted.tag, mockWorkspaceKey),
     ).toThrow();
@@ -63,7 +66,10 @@ describe('SecretEncryptionService', () => {
 
   it('throws on tampered auth tag', () => {
     const encrypted = service.encrypt('secret', mockWorkspaceKey);
-    const badTag = encrypted.tag.slice(0, -2) + '00';
+    const badTag =
+      encrypted.tag[0] === '0'
+        ? '1' + encrypted.tag.slice(1)
+        : '0' + encrypted.tag.slice(1);
     expect(() =>
       service.decrypt(encrypted.ciphertext, encrypted.iv, badTag, mockWorkspaceKey),
     ).toThrow();
