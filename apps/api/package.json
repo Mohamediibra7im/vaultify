@@ -11,7 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "test": "jest",
+    "test": "prisma generate && jest",
     "test:watch": "jest --watch"
   },
   "dependencies": {
