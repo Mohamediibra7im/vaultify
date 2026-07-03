@@ -23,12 +23,18 @@ async function createApp() {
   await app.init();
 }
 
-// ponytail: Vercel serverless + local dev in one file
-if (process.env.VERCEL) {
-  createApp();
-  module.exports = server;
-} else {
-  createApp().then(() => {
+// ponytail: Ensure app is ready before handling any request
+const ready = createApp();
+
+// ponytail: Vercel serverless — export handler that awaits init
+module.exports = async (req: any, res: any) => {
+  await ready;
+  server(req, res);
+};
+
+// ponytail: Local dev — listen on port
+if (!process.env.VERCEL) {
+  ready.then(() => {
     const port = process.env.PORT || 4000;
     server.listen(port, () =>
       console.log(`Vaultify API running on http://localhost:${port}`),
