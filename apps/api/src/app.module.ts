@@ -35,7 +35,7 @@ import { HealthController } from './health.controller';
     EventsModule,
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 20 }],
-      storage: new ThrottlerStorageRedisService(new Redis(process.env.REDIS_URL || 'redis://localhost:6379')),
+      storage: process.env.REDIS_URL ? new ThrottlerStorageRedisService(new Redis(process.env.REDIS_URL)) : undefined, // ponytail: in-memory when no REDIS_URL
     }),
   ],
   controllers: [HealthController],
