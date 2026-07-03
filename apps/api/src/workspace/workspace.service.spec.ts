@@ -3,7 +3,6 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { WorkspaceService } from './workspace.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { EventsGateway } from '../events/events.gateway';
 import { Role } from '../generated/prisma/client';
 
 describe('WorkspaceService (RBAC)', () => {
@@ -43,7 +42,6 @@ describe('WorkspaceService (RBAC)', () => {
   };
 
   const mockAuditLog = { log: jest.fn() };
-  const mockEventsGateway = { emitToWorkspace: jest.fn(), emitToUser: jest.fn() };
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,7 +49,6 @@ describe('WorkspaceService (RBAC)', () => {
         WorkspaceService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditLogService, useValue: mockAuditLog },
-        { provide: EventsGateway, useValue: mockEventsGateway },
       ],
     }).compile();
     service = module.get<WorkspaceService>(WorkspaceService);

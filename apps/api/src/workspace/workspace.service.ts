@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { EventsGateway } from '../events/events.gateway';
 import { Role } from '../generated/prisma/client';
 import { CreateWorkspaceDto, UpdateMemberRoleDto, UpdateWorkspaceDto } from './dto';
 
@@ -14,7 +13,6 @@ export class WorkspaceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLog: AuditLogService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async create(userId: string, dto: CreateWorkspaceDto) {
@@ -39,11 +37,6 @@ export class WorkspaceService {
       action: 'workspace.create',
       target: 'workspace',
       targetId: workspace.id,
-    });
-
-    this.eventsGateway.emitToWorkspace(workspace.id, 'workspace:changed', {
-      id: workspace.id,
-      name: workspace.name,
     });
 
     return workspace;
@@ -112,11 +105,6 @@ export class WorkspaceService {
       details: JSON.stringify({ name: dto.name }),
     });
 
-    this.eventsGateway.emitToWorkspace(workspaceId, 'workspace:changed', {
-      id: result.id,
-      name: result.name,
-    });
-
     return result;
   }
 
@@ -135,10 +123,6 @@ export class WorkspaceService {
       target: 'workspace',
       targetId: workspaceId,
       details: JSON.stringify({ name: workspace?.name }),
-    });
-
-    this.eventsGateway.emitToWorkspace(workspaceId, 'workspace:deleted', {
-      id: workspaceId,
     });
   }
 
@@ -183,16 +167,6 @@ export class WorkspaceService {
       details: JSON.stringify({ role: dto.role }),
     });
 
-    this.eventsGateway.emitToWorkspace(workspaceId, 'member:changed', {
-      memberId,
-      role: dto.role,
-    });
-
-    this.eventsGateway.emitToUser(member.userId, 'member:changed', {
-      memberId,
-      role: dto.role,
-    });
-
     return result;
   }
 
@@ -212,15 +186,6 @@ export class WorkspaceService {
       target: 'member',
       targetId: memberId,
       details: JSON.stringify({ removedUserId: member.userId }),
-    });
-
-    this.eventsGateway.emitToWorkspace(workspaceId, 'member:removed', {
-      memberId,
-      removedUserId: member.userId,
-    });
-
-    this.eventsGateway.emitToUser(member.userId, 'member:removed', {
-      memberId,
     });
   }
 

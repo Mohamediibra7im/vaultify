@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
-import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async notifySecretChanged(params: {
@@ -60,21 +58,7 @@ export class NotificationService {
 
     if (notifications.length > 0) {
       await this.prisma.notification.createMany({ data: notifications });
-
-      // Emit real-time notification via WebSocket
-      for (const notification of notifications) {
-        this.eventsGateway.emitToUser(notification.userId, 'notification', {
-          ...notification,
-        });
-      }
     }
-
-    // Emit secret:changed event to workspace
-    this.eventsGateway.emitToWorkspace(params.workspaceId, 'secret:changed', {
-      secretKey: params.secretKey,
-      action: params.action,
-      environmentName: params.environmentName,
-    });
 
     // Send email notifications (opt-in via SMTP_API_KEY)
     const workspace = await this.prisma.workspace.findUnique({

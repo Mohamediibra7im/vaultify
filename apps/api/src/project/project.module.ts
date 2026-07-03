@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ProjectController } from './project.controller';
 import { ProjectService } from './project.service';
-import { EventsModule } from '../events/events.module';
 
 @Module({
-  imports: [EventsModule],
+  imports: [],
   controllers: [ProjectController],
   providers: [ProjectService],
 })

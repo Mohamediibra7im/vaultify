@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventsGateway } from '../events/events.gateway';
 
 describe('ProjectService', () => {
   let service: ProjectService;
@@ -46,14 +45,11 @@ describe('ProjectService', () => {
     },
   };
 
-  const mockEventsGateway = { emitToWorkspace: jest.fn(), emitToUser: jest.fn() };
-
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: EventsGateway, useValue: mockEventsGateway },
       ],
     }).compile();
     service = module.get<ProjectService>(ProjectService);

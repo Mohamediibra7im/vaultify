@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class AuditLogService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async log(params: {
@@ -18,7 +16,6 @@ export class AuditLogService {
     details?: string; // JSON string with extra info
   }) {
     const record = await this.prisma.auditLog.create({ data: params });
-    this.eventsGateway.emitToWorkspace(params.workspaceId, 'audit:new', record);
     return record;
   }
 

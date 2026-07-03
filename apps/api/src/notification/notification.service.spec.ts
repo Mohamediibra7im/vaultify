@@ -2,13 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationService } from './notification.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
-import { EventsGateway } from '../events/events.gateway';
 
 describe('NotificationService', () => {
   let service: NotificationService;
   let prisma: PrismaService;
   let emailService: EmailService;
-  let eventsGateway: EventsGateway;
 
   const mockUser1 = { id: 'user-1', email: 'alice@example.com', name: 'Alice' };
   const mockUser2 = { id: 'user-2', email: 'bob@example.com', name: 'Bob' };
@@ -46,25 +44,18 @@ describe('NotificationService', () => {
     sendSecretChangeEmail: jest.fn(),
   };
 
-  const mockEventsGateway = {
-    emitToUser: jest.fn(),
-    emitToWorkspace: jest.fn(),
-  };
-
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EmailService, useValue: mockEmailService },
-        { provide: EventsGateway, useValue: mockEventsGateway },
       ],
     }).compile();
 
     service = module.get<NotificationService>(NotificationService);
     prisma = module.get<PrismaService>(PrismaService);
     emailService = module.get<EmailService>(EmailService);
-    eventsGateway = module.get<EventsGateway>(EventsGateway);
   });
 
   beforeEach(() => {
@@ -75,7 +66,7 @@ describe('NotificationService', () => {
   });
 
   describe('notifySecretChanged', () => {
-    it('emits notification events to all workspace members except the actor via EventsGateway', async () => {
+    it('creates in-app notifications for all workspace members except the actor', async () => {
       await service.notifySecretChanged(defaultParams);
 
       // Should create notifications for user-2 and user-3 (excluding actor user-1)
@@ -84,18 +75,6 @@ describe('NotificationService', () => {
           expect.objectContaining({ userId: 'user-2', type: 'secret_updated', workspaceId: 'ws-1' }),
           expect.objectContaining({ userId: 'user-3', type: 'secret_updated', workspaceId: 'ws-1' }),
         ],
-      });
-
-      // Should emit to each member (except actor) via eventsGateway.emitToUser
-      expect(mockEventsGateway.emitToUser).toHaveBeenCalledTimes(2);
-      expect(mockEventsGateway.emitToUser).toHaveBeenCalledWith('user-2', 'notification', expect.objectContaining({ userId: 'user-2' }));
-      expect(mockEventsGateway.emitToUser).toHaveBeenCalledWith('user-3', 'notification', expect.objectContaining({ userId: 'user-3' }));
-
-      // Should emit secret:changed event to the workspace
-      expect(mockEventsGateway.emitToWorkspace).toHaveBeenCalledWith('ws-1', 'secret:changed', {
-        secretKey: 'DB_URL',
-        action: 'updated',
-        environmentName: 'Staging',
       });
     });
 
@@ -135,10 +114,8 @@ describe('NotificationService', () => {
       // Both email sends should have been attempted
       expect(mockEmailService.sendSecretChangeEmail).toHaveBeenCalledTimes(2);
 
-      // In-app notifications and WebSocket events should still succeed
+      // In-app notifications should still succeed
       expect(mockPrisma.notification.createMany).toHaveBeenCalled();
-      expect(mockEventsGateway.emitToUser).toHaveBeenCalledTimes(2);
-      expect(mockEventsGateway.emitToWorkspace).toHaveBeenCalled();
     });
 
     it('does nothing when there are no other members besides the actor', async () => {
@@ -147,7 +124,6 @@ describe('NotificationService', () => {
       await service.notifySecretChanged(defaultParams);
 
       expect(mockPrisma.notification.createMany).not.toHaveBeenCalled();
-      expect(mockEventsGateway.emitToUser).not.toHaveBeenCalled();
       expect(mockEmailService.sendSecretChangeEmail).not.toHaveBeenCalled();
     });
 
@@ -178,8 +154,6 @@ describe('NotificationService', () => {
 
       expect(mockEmailService.sendSecretChangeEmail).not.toHaveBeenCalled();
       expect(mockPrisma.notification.createMany).toHaveBeenCalled();
-      expect(mockEventsGateway.emitToUser).toHaveBeenCalledTimes(2);
-      expect(mockEventsGateway.emitToWorkspace).toHaveBeenCalled();
     });
   });
 

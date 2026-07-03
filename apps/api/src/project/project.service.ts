@@ -4,14 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { EventsGateway } from '../events/events.gateway';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 
 @Injectable()
 export class ProjectService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async create(userId: string, workspaceId: string, dto: CreateProjectDto) {
@@ -20,7 +18,6 @@ export class ProjectService {
       data: { name: dto.name, description: dto.description, workspaceId },
       select: { id: true, workspaceId: true, name: true, description: true, createdAt: true },
     });
-    this.eventsGateway.emitToWorkspace(result.workspaceId, 'project:changed', { id: result.id, name: result.name, workspaceId: result.workspaceId });
     return result;
   }
 
@@ -81,7 +78,6 @@ export class ProjectService {
       data: dto,
       select: { id: true, workspaceId: true, name: true, description: true, createdAt: true },
     });
-    this.eventsGateway.emitToWorkspace(result.workspaceId, 'project:changed', { id: result.id, name: result.name, workspaceId: result.workspaceId });
     return result;
   }
 
@@ -93,7 +89,6 @@ export class ProjectService {
     await this.assertMember(userId, project.workspaceId);
 
     await this.prisma.project.delete({ where: { id: projectId } });
-    this.eventsGateway.emitToWorkspace(project.workspaceId, 'project:deleted', { id: projectId, workspaceId: project.workspaceId });
   }
 
   private async isMember(userId: string, workspaceId: string) {
