@@ -1,11 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
 import { Navbar } from "./navbar";
 import { Footer } from "./footer";
 import { ArrowLeft, Clock, ShieldCheck, FileText } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 interface LegalSection {
   id: string;

@@ -9,13 +9,11 @@ import { getSocket, useWorkspaceSubscription } from "@/lib/websocket";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Loader2,
   Eye,
   EyeOff,
-  Plus,
   Trash2,
   Globe,
   Key,
@@ -29,7 +27,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "motion/react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface Secret {
@@ -520,7 +517,7 @@ export default function EnvironmentDetailPage({
             </div>
             <div className="flex-[2] min-w-[280px] space-y-1.5">
               <Label className="text-[9px] uppercase text-muted-foreground/80">Value</Label>
-              <p className="text-[6.5px] text-muted-foreground/50 -mt-1 mb-1">Tip: use {'{{'} envName.KEY {'}}'} to reference another env's secret</p>
+              <p className="text-[6.5px] text-muted-foreground/50 -mt-1 mb-1">Tip: use {'{{'} envName.KEY {'}}'} to reference another env&apos;s secret</p>
               <div className="flex gap-2">
                 <Input
                   placeholder="postgresql://..."

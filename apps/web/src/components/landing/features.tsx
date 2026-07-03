@@ -8,22 +8,11 @@ import {
   RefreshCw,
   ScrollText,
   Terminal,
-  Layers,
-  ShieldCheck,
   Check,
-  Play,
-  ArrowUpRight,
-  ShieldAlert,
   Sliders,
   ChevronRight,
   UserCheck,
-  Copy,
-  Key,
-  Database,
-  Cpu,
   Server,
-  Activity,
-  Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

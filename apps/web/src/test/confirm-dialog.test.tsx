@@ -1,18 +1,21 @@
+import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 vi.mock("motion/react", () => {
-  const React = require("react");
   const motion = new Proxy(
     {},
     {
-      get: (_target: unknown, tag: string) =>
-        React.forwardRef(
-          ({ children, ...props }: Record<string, unknown>, _ref: unknown) =>
+      get: (_target: unknown, tag: string) => {
+        const Component = React.forwardRef(
+          ({ children, ...props }: Record<string, unknown>) =>
             React.createElement(tag as string, props, children),
-        ),
+        );
+        Component.displayName = `motion.${tag}`;
+        return Component;
+      },
     },
   );
   const AnimatePresence = ({ children }: { children: React.ReactNode }) =>

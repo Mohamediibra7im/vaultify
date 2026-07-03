@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
@@ -37,8 +37,7 @@ interface Workspace {
 }
 
 export default function SecretsSearchPage() {
-  const { token, user } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [workspaceId, setWorkspaceId] = useState("");

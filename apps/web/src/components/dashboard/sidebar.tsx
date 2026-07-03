@@ -7,7 +7,6 @@ import { motion } from "motion/react";
 import {
   Activity,
   Bell,
-  Cpu,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -15,11 +14,9 @@ import {
   ScrollText,
   Search,
   Settings,
-  Terminal,
   Users,
   ShieldAlert,
   User,
-  ShieldCheck,
 } from "lucide-react";
 
 import {

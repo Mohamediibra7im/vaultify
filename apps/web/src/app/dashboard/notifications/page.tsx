@@ -12,12 +12,7 @@ import {
   ShieldAlert,
   Trash2,
   UserPlus,
-  SlidersHorizontal,
-  ChevronDown,
   Terminal,
-  Activity,
-  Layers,
-  Settings,
 } from "lucide-react";
 
 interface Notification {
@@ -263,7 +258,7 @@ export default function NotificationsPage() {
         </div>
 
         <span className="text-[10px] font-mono text-text-muted uppercase">
-          // Showing {filteredNotifications.length} nodes
+          {/* Showing {filteredNotifications.length} nodes */}
         </span>
       </div>
 
@@ -291,7 +286,7 @@ export default function NotificationsPage() {
               <Bell className="size-6" />
             </div>
             <h2 className="mt-5 text-[13px] font-bold font-mono uppercase tracking-wider text-text-primary">
-              // LOG STREAM RESOLVED
+              {/* LOG STREAM RESOLVED */}
             </h2>
             <p className="mx-auto mt-2 max-w-md text-[11.5px] leading-relaxed text-text-muted font-mono">
               All compliance mutations across workspaces are resolved. Real-time active alerts are currently at 0.

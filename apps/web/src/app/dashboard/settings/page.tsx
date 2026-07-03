@@ -478,7 +478,7 @@ export default function SettingsGeneralPage() {
                   <Key className="h-4 w-4" />
                   <span>Save token key:</span>
                 </div>
-                <p className="text-[9.5px] text-muted-foreground leading-normal">Copy it now. You won't see it again.</p>
+                <p className="text-[9.5px] text-muted-foreground leading-normal">Copy it now. You won&apos;t see it again.</p>
                 <div className="flex gap-2">
                   <code className="bg-black/50 p-2 rounded border border-white/5 select-all flex-1 text-[10px] text-primary truncate">{createdTokenVal}</code>
                   <button

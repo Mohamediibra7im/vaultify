@@ -174,7 +174,7 @@ export function NotificationBell() {
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-6 text-center">
-              <p className="text-[12px] font-mono text-text-muted">// Zero events recorded</p>
+              <p className="text-[12px] font-mono text-text-muted">{/* Zero events recorded */}</p>
             </div>
           ) : (
             notifications.map((n) => {

@@ -11,7 +11,7 @@ export default function GDPRPage() {
             The General Data Protection Regulation (GDPR) is a comprehensive EU data privacy regulation. Vaultify is committed to compliance with all GDPR guidelines regarding the storage, processing, and handling of European Union resident data.
           </p>
           <p>
-            Because we use a zero-knowledge cryptographic model, Vaultify is uniquely aligned with GDPR's core values of data minimization, privacy-by-design, and user autonomy.
+            Because we use a zero-knowledge cryptographic model, Vaultify is uniquely aligned with GDPR&apos;s core values of data minimization, privacy-by-design, and user autonomy.
           </p>
         </>
       )

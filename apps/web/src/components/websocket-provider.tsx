@@ -9,7 +9,7 @@ import { connectSocket, disconnectSocket } from '@/lib/websocket';
 import { toast } from 'sonner';
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
 
   useEffect(() => {
     if (!token) return;

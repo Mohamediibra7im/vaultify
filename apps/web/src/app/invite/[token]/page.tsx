@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { VaultifyLogo } from "@/components/vaultify-logo";
-import { Shield, Users, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Users, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 

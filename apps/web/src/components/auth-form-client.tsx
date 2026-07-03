@@ -4,7 +4,6 @@ import { type FormEvent, useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,23 +13,14 @@ import {
   Eye, 
   EyeOff, 
   Loader2, 
-  Lock, 
-  ShieldCheck, 
-  Check, 
-  Sparkles, 
-  Terminal, 
-  Activity, 
-  Server, 
   ArrowRight, 
   ArrowLeft, 
-  Key, 
-  Database,
   Fingerprint,
   RefreshCw,
   Globe
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { cn } from "@/lib/utils";
+
 
 interface AuthFormClientProps {
   mode: "login" | "register";
@@ -157,7 +147,7 @@ export function AuthFormClient({ mode }: AuthFormClientProps) {
           {/* Testimonial Quote */}
           <div className="relative rounded-2xl border border-white/[0.03] bg-zinc-950/20 p-5 backdrop-blur-sm">
             <p className="text-[12px] italic text-text-secondary leading-relaxed">
-              "We migrated all production secrets from environment files to Vaultify. It saved us hundreds of DevOps hours while keeping audit logs completely airtight."
+              &quot;We migrated all production secrets from environment files to Vaultify. It saved us hundreds of DevOps hours while keeping audit logs completely airtight.&quot;
             </p>
             <div className="mt-3 flex items-center gap-2">
               <div className="size-6 rounded-full bg-gradient-to-r from-primary to-cyan-500" />
@@ -323,7 +313,7 @@ export function AuthFormClient({ mode }: AuthFormClientProps) {
           <p className="text-[10px] text-text-muted font-mono">
             {isLogin ? (
               <>
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link
                   href="/register"
                   className="text-primary hover:underline font-bold transition"

@@ -1,34 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
-  Activity,
   ArrowRight,
-  Bell,
-  Cpu,
-  FolderKanban,
-  KeyRound,
-  Layers,
-  Lock,
   Plus,
   ScrollText,
   Search,
-  ShieldCheck,
-  Sparkles,
-  Terminal,
-  Users,
-  Play,
-  Cloud,
-  GitBranch,
-  Settings,
-  Database,
   RefreshCw,
-  Unlock,
   Key,
   Flame,
 } from "lucide-react";
@@ -47,12 +29,6 @@ interface AuditEntry {
   actorName: string;
   createdAt: string;
   workspaceName?: string;
-}
-
-function greeting(hour: number) {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
 }
 
 function relativeTime(iso: string) {
@@ -416,7 +392,7 @@ function MultiphaseTimeline({ activity, loading }: { activity: AuditEntry[]; loa
   if (activity.length === 0) {
     return (
       <div className="px-6 py-12 text-center text-[11px] font-mono text-text-muted uppercase">
-        // No secure logs generated on node
+        {/* No secure logs generated on node */}
       </div>
     );
   }
@@ -573,7 +549,7 @@ export default function DashboardPage() {
               WELCOME BACK, <span className="bg-gradient-to-r from-primary to-teal-400 bg-clip-text text-transparent"><ScrambledText text={firstName} /></span>
             </h1>
             <p className="text-[12.5px] leading-relaxed text-text-secondary font-mono">
-              // Secure session active. Your synced environment configurations and credentials are live and monitoring.
+              {/* Secure session active. Your synced environment configurations and credentials are live and monitoring. */}
             </p>
           </div>
 

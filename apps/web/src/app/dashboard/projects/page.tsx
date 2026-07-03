@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FolderKanban, ArrowRight, Search, Plus, Loader2 } from "lucide-react";
+import { FolderKanban, ArrowRight, Search } from "lucide-react";
 import { motion } from "motion/react";
 
 interface Project {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -9,22 +9,17 @@ import { getSocket, useWorkspaceSubscription } from "@/lib/websocket";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
-  Users,
   FolderKanban,
-  Shield,
   Plus,
   Trash2,
   Loader2,
   Link2,
   Copy,
-  History,
   XCircle,
   ShieldCheck,
-  Check,
   KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "motion/react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface WorkspaceDetail {
@@ -169,14 +164,7 @@ export default function WorkspaceDetailPage({
     }
   }, [token, workspaceId, router]);
 
-  // Fetch invite links once workspace is loaded (owner only)
-  useEffect(() => {
-    if (ws && user && user.id === ws.ownerId && token) {
-      fetchInviteLinks();
-    }
-  }, [ws?.id]);
-
-  async function fetchInviteLinks() {
+  const fetchInviteLinks = useCallback(async () => {
     if (!token || !workspaceId) return;
     setLoadingInvites(true);
     try {
@@ -190,7 +178,14 @@ export default function WorkspaceDetailPage({
     } finally {
       setLoadingInvites(false);
     }
-  }
+  }, [token, workspaceId]);
+
+  // Fetch invite links once workspace is loaded (owner only)
+  useEffect(() => {
+    if (ws && user && user.id === ws.ownerId && token) {
+      fetchInviteLinks();
+    }
+  }, [ws, ws?.id, user, token, fetchInviteLinks]);
 
   async function handleGenerateInvite() {
     if (!token || !workspaceId) return;
@@ -472,7 +467,7 @@ export default function WorkspaceDetailPage({
                 <span>Save Invitation Link:</span>
               </div>
               <p className="text-[9.5px] text-muted-foreground leading-normal">
-                Make sure to copy it now. For security reasons, you won't be able to retrieve it again after a page refresh.
+                Make sure to copy it now. For security reasons, you won&apos;t be able to retrieve it again after a page refresh.
               </p>
               <div className="flex gap-2">
                 <code className="bg-black/50 p-2 rounded border border-white/5 select-all flex-1 text-[10px] text-primary truncate font-mono">

@@ -1,3 +1,4 @@
+import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DashboardPage from "@/app/dashboard/page";
@@ -36,20 +37,19 @@ vi.mock("next/link", () => ({
 
 // Mock motion to avoid animation side effects in jsdom
 vi.mock("motion/react", () => {
-  const React = require("react");
   const motion = new Proxy(
     {},
     {
-      get: (_target: unknown, tag: string) =>
-        React.forwardRef(
-          (
-            { children, ...props }: Record<string, unknown>,
-            _ref: unknown,
-          ) => {
+      get: (_target: unknown, tag: string) => {
+        const Component = React.forwardRef(
+          ({ children, ...props }: Record<string, unknown>) => {
             const Element = tag;
             return React.createElement(Element, props, children);
           },
-        ),
+        );
+        Component.displayName = `motion.${tag}`;
+        return Component;
+      },
     },
   );
   return { motion };

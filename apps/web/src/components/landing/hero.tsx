@@ -23,13 +23,10 @@ import {
   ChevronRight,
   Settings,
   ScrollText,
-  Key,
   Activity,
   Layers,
   Plus,
   X,
-  Server,
-  Globe,
   Play
 } from "lucide-react";
 

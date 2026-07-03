@@ -7,15 +7,11 @@ import {
   FolderKanban, 
   Layers, 
   KeyRound, 
-  ChevronRight,
   ShieldCheck,
   Check,
   Plus,
   RefreshCw,
-  ExternalLink,
   Laptop,
-  Globe,
-  Settings,
   Lock,
   Unlock
 } from "lucide-react";
@@ -99,7 +95,7 @@ export function HowItWorks() {
             transition={{ duration: 0.45, delay: 0.07 }}
             className="mt-4 text-sm text-muted-foreground leading-relaxed md:text-base"
           >
-            Vaultify integrates into your team's active processes. Set up a secure workspace, configure variables, and run builds.
+            Vaultify integrates into your team&apos;s active processes. Set up a secure workspace, configure variables, and run builds.
           </motion.p>
         </div>
 
