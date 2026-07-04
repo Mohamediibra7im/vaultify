@@ -2,6 +2,8 @@ import { ImageResponse } from "next/og";
 import { readFileSync } from "fs";
 import { join } from "path";
 
+export const runtime = "nodejs";
+
 export const alt = "Vaultify | Zero-Knowledge Secrets Infrastructure";
 export const size = {
   width: 1200,

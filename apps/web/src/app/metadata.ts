@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     template: "%s | Vaultify"
   },
   description: "Secure, developer-first secrets management console. Sync environment variables, audit access telemetry, and manage team scopes with Zero-Knowledge encryption.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://vaultiify.vercel.app"),
   keywords: [
     "secrets manager",
     "zero knowledge encryption",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://vaultify.io",
+    url: "https://vaultiify.vercel.app",
     title: "Vaultify | ZK-Encryption Secrets Manager",
     description: "Secure, developer-first secrets management console. Sync environment variables, audit access telemetry, and manage team scopes.",
     siteName: "Vaultify",
