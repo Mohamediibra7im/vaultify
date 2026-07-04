@@ -4,7 +4,7 @@ import { join } from "path";
 
 export const runtime = "nodejs";
 
-export const alt = "Vaultify | Zero-Knowledge Secrets Infrastructure";
+export const alt = "Vaultify | Zero-Knowledge Secrets Management for Teams";
 export const size = {
   width: 1200,
   height: 630,
@@ -229,7 +229,7 @@ export default async function Image() {
                   fontFamily: "JetBrains Mono",
                 }}
               >
-                Zero-Knowledge Engine
+                Secrets Management Platform
               </span>
             </div>
           </div>
@@ -252,7 +252,7 @@ export default async function Image() {
                 fontFamily: "Inter",
               }}
             >
-              Secrets that
+              Zero-knowledge
             </span>
             <span
               style={{
@@ -264,19 +264,19 @@ export default async function Image() {
                 fontFamily: "Inter",
               }}
             >
-              never touch
+              secrets for teams
             </span>
             <span
               style={{
                 fontSize: "48px",
                 fontWeight: "800",
-                color: "#FAFAFA",
+                color: "#10B981",
                 letterSpacing: "-0.045em",
                 lineHeight: "1.05",
                 fontFamily: "Inter",
               }}
             >
-              disk.
+              that ship.
             </span>
           </div>
 
@@ -291,8 +291,8 @@ export default async function Image() {
               fontFamily: "Inter",
             }}
           >
-            Derive key rings in terminal memory. Stream decrypted variables
-            directly to subprocesses. Zero plaintext on disk.
+            Encrypt, organize, and sync environment variables across workspaces,
+            projects, and environments. Self-hosted Doppler alternative.
           </p>
 
           {/* Status row */}
@@ -304,9 +304,9 @@ export default async function Image() {
             }}
           >
             {[
-              { label: "SECURE ENCLAVE", color: "#10B981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.15)" },
-              { label: "ZK-DECRYPTED", color: "#34D399", bg: "rgba(52,211,153,0.05)", border: "rgba(52,211,153,0.12)" },
-              { label: "AES-256-GCM", color: "#6EE7B7", bg: "rgba(110,231,183,0.04)", border: "rgba(110,231,183,0.1)" },
+              { label: "AES-256-GCM", color: "#10B981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.15)" },
+              { label: "TEAM WORKSPACES", color: "#34D399", bg: "rgba(52,211,153,0.05)", border: "rgba(52,211,153,0.12)" },
+              { label: "AUDIT TRAIL", color: "#6EE7B7", bg: "rgba(110,231,183,0.04)", border: "rgba(110,231,183,0.1)" },
             ].map((item, i) => (
               <div
                 key={i}
@@ -404,7 +404,7 @@ export default async function Image() {
                   letterSpacing: "0.03em",
                 }}
               >
-                vaultify-cli --daemon
+                vaultify pull --env production
               </span>
             </div>
 
@@ -453,7 +453,7 @@ export default async function Image() {
                   </span>
                 </div>
                 <span style={{ color: "#E4E4E7", fontWeight: "500" }}>
-                  vaultify run -- npm run dev
+                  vaultify pull --env production
                 </span>
               </div>
 
@@ -461,27 +461,27 @@ export default async function Image() {
               {[
                 {
                   time: "13:41:04",
-                  label: "handshake",
+                  label: "auth",
                   labelColor: "#10B981",
-                  msg: "secure ring cluster... ok",
+                  msg: "authenticated as jane@team.dev",
                 },
                 {
                   time: "13:41:04",
-                  label: "pbkdf2",
+                  label: "vault",
                   labelColor: "#34D399",
-                  msg: "256-bit AES key derived in memory",
+                  msg: "fetching secrets from workspace MyTeam",
                 },
                 {
                   time: "13:41:05",
-                  label: "aes-gcm",
+                  label: "decrypt",
                   labelColor: "#34D399",
-                  msg: "16 client envelopes decrypted locally",
+                  msg: "16 secrets decrypted with AES-256-GCM",
                 },
                 {
                   time: "13:41:05",
-                  label: "process",
+                  label: "export",
                   labelColor: "#34D399",
-                  msg: "variables injected to subprocess",
+                  msg: ".env file written to disk",
                 },
               ].map((line, i) => (
                 <div
@@ -519,7 +519,7 @@ export default async function Image() {
                     boxShadow: "0 0 8px rgba(16,185,129,0.5)",
                   }}
                 />
-                <span style={{ fontWeight: "500" }}>Ready in 14ms</span>
+                <span style={{ fontWeight: "500" }}>Done. 16 secrets exported.</span>
               </div>
             </div>
 
@@ -537,7 +537,7 @@ export default async function Image() {
                 color: "#3F3F46",
               }}
             >
-              <span>TLS 1.3 / AES-GCM</span>
+              <span>AES-256-GCM / RBAC</span>
               <div
                 style={{
                   display: "flex",
@@ -556,7 +556,7 @@ export default async function Image() {
                     boxShadow: "0 0 6px rgba(16,185,129,0.5)",
                   }}
                 />
-                100% SECURE
+                ENCRYPTED
               </div>
             </div>
           </div>
@@ -578,7 +578,7 @@ export default async function Image() {
                 letterSpacing: "0.05em",
               }}
             >
-              vaultify.dev
+              vaultify.vercel.app
             </span>
           </div>
         </div>
