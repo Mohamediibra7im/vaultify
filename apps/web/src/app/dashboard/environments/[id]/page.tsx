@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -101,6 +101,21 @@ export default function EnvironmentDetailPage({
   // Import/export
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
+  // ponytail: hidden file input, reads .env into textarea
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      if (typeof text === "string") setImportText(text);
+    };
+    reader.readAsText(file);
+    // reset so same file can be re-selected
+    e.target.value = "";
+  }
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -775,6 +790,27 @@ export default function EnvironmentDetailPage({
               <p className="text-[10px] text-muted-foreground mt-1">
                 Paste raw key-value pairs below. Pre-existing keys will be skipped.
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".env,.txt"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-[10px]"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                <Upload className="h-3 w-3 mr-1" />
+                Choose File
+              </Button>
+              <span className="text-[10px] text-muted-foreground">or paste below</span>
             </div>
             <textarea
               className="min-h-[160px] w-full rounded-lg border border-white/5 bg-zinc-950/40 p-3 font-mono text-[10px] focus:outline-none focus:ring-1 focus:ring-primary/40 text-zinc-300"
