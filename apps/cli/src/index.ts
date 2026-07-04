@@ -135,12 +135,12 @@ async function promptInput(question: string): Promise<string> {
   return answer;
 }
 
-/** Find workspace by slug from user's workspaces. */
+// ponytail: Prisma Workspace has no slug field — match on name
 async function resolveWorkspaceSlug(api: VaultifyApi, slug: string): Promise<WorkspaceDto> {
   const workspaces = await api.get<WorkspaceDto[]>('/workspaces');
-  const ws = workspaces.find((w) => w.slug === slug);
+  const ws = workspaces.find((w) => w.name === slug);
   if (!ws) {
-    throw new Error(`Workspace with slug "${slug}" not found. Available: ${workspaces.map((w) => w.slug).join(', ')}`);
+    throw new Error(`Workspace with name "${slug}" not found. Available: ${workspaces.map((w) => w.name).join(', ')}`);
   }
   return ws;
 }
@@ -349,7 +349,7 @@ Examples:
         console.log(chalk.bold(`Workspaces (${workspaces.length}):`));
         for (const ws of workspaces) {
           const count = ws._count?.projects ?? '?';
-          console.log(`  ${chalk.cyan(ws.slug.padEnd(20))} ${chalk.dim(ws.name)} ${chalk.dim(`(${count} projects)`)}`);
+          console.log(`  ${chalk.cyan(ws.name.padEnd(20))} ${chalk.dim(`(${count} projects)`)}`);
         }
         return;
       }
@@ -378,7 +378,7 @@ Examples:
         console.log(chalk.dim(`No secrets in ${environment}.`));
         return;
       }
-      console.log(chalk.bold(`Secrets in ${ws.slug} / ${project.name} / ${environment} (${secrets.length}):`));
+      console.log(chalk.bold(`Secrets in ${ws.name} / ${project.name} / ${environment} (${secrets.length}):`));
       for (const s of secrets) {
         console.log(`  ${chalk.green(s.key.padEnd(30))} ${chalk.dim(`v${s.version}`)}`);
       }
