@@ -1,85 +1,73 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs" alt="NestJS" />
-  <img src="https://img.shields.io/badge/Prisma-7-2D3748?style=for-the-badge&logo=prisma" alt="Prisma" />
-  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Next.js%2016-000?style=plastic&logo=next.js" alt="Next.js 16" />
+  <img src="https://img.shields.io/badge/NestJS%2011-E0234E?style=plastic&logo=nestjs" alt="NestJS 11" />
+  <img src="https://img.shields.io/badge/Prisma%207-2D3748?style=plastic&logo=prisma" alt="Prisma 7" />
+  <img src="https://img.shields.io/badge/TypeScript%206-3178C6?style=plastic&logo=typescript" alt="TypeScript 6" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=plastic&logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Redis%207-DC382D?style=plastic&logo=redis" alt="Redis 7" />
+  <img src="https://img.shields.io/badge/Tailwind%20CSS%204-06B6D4?style=plastic&logo=tailwindcss" alt="Tailwind CSS 4" />
+  <img src="https://img.shields.io/badge/pnpm-F69220?style=plastic&logo=pnpm" alt="pnpm" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=plastic" alt="MIT License" />
 </p>
 
-<h1 align="center">🔐 Vaultify</h1>
+# Vaultify
 
-<p align="center">
-  <strong>Zero-knowledge secrets management for modern development teams.</strong><br/>
-  Encrypt, organize, and sync environment variables across workspaces, projects, and environments — from local dev to production.
-</p>
+**Zero-knowledge secrets management for teams that ship.**
 
-<p align="center">
-  <a href="#-quickstart">Quickstart</a> •
-  <a href="#-features">Features</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-api-reference">API Reference</a> •
-  <a href="#-contributing">Contributing</a>
-</p>
+Encrypt, organize, and sync environment variables across workspaces, projects,
+and environments — from local dev to production. Self-hosted alternative to
+Doppler or Infisical.
 
 ---
 
-## Why Vaultify?
+## The short version
 
-Teams still share secrets through Slack, WhatsApp, and email. That makes values easy to leak, hard to audit, and painful to keep in sync. Vaultify gives teams a single source of truth for what is configured in each workspace, project, and environment.
-
-**Vaultify fixes this.** It provides a structured hierarchy — `Workspace → Project → Environment → Secrets` — with encrypted storage, granular RBAC, real-time sync, and an audit trail for sensitive actions. Think of it as a self-hostable alternative to Doppler or Infisical, built with a modern TypeScript stack.
-
----
-
-## ✨ Features
-
-| Feature                        | Description                                                                  |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| **🔒 AES-256-GCM Encryption**  | Every secret is encrypted with a unique initialization vector before storage |
-| **👥 Team Workspaces**         | Invite members with a single link. Granular roles: Owner, Editor, Viewer     |
-| **🌍 Multi-Environment**       | Dev, staging, production — each isolated with independent access controls    |
-| **🔍 Environment Diff**        | Compare secrets across environments to catch configuration drift             |
-| **📋 Audit Trail**             | Every secret read, write, reveal, and change is logged immutably             |
-| **🔑 API Tokens**              | Generate scoped tokens for CI/CD pipelines and automation scripts            |
-| **📦 .env Import/Export**      | Bulk-import from `.env` files, export back out anytime                       |
-| **🕐 Version History**         | Track every secret change with full rollback capability                      |
-| **👁️ Click-to-Reveal**         | Secret values masked by default — each reveal is audit-logged                |
-| **🔔 Real-time Notifications** | WebSocket-powered live updates when secrets or members change                |
-| **🛡️ Per-Environment RBAC**    | Override member roles at the environment level for fine-grained access       |
-| **🌐 GitHub OAuth**            | One-click sign-in with GitHub alongside email/password auth                  |
+Teams shouldn't share `DATABASE_URL` over Slack. Vaultify gives you a
+structured hierarchy — `Workspace → Project → Environment → Secret` — with
+AES-256-GCM encryption at rest, granular RBAC, real-time WebSocket sync, and
+an immutable audit trail for every read, write, and reveal.
 
 ---
 
-## 🚀 Quickstart
+## Features
+
+| Area | What it does |
+|------|-------------|
+| **AES-256-GCM encryption** | Every secret gets a unique IV before storage. Key management is yours. |
+| **Team workspaces** | Invite link system, roles (Owner / Editor / Viewer), per-environment role overrides |
+| **Multi-environment** | Dev, staging, production — isolated access controls per environment |
+| **Environment diff** | Compare secrets across environments, catch config drift before it hits prod |
+| **Audit trail** | Every read, write, reveal, and change logged immutably. Who saw what, when. |
+| **API tokens** | Scoped tokens for CI/CD. Prefix-based identification, workspace-scoped. |
+| **.env import / export** | Bulk-import from `.env` files, export back out. Works both directions. |
+| **Version history** | Every secret change tracked. Full rollback to any previous version. |
+| **Click-to-reveal** | Values masked by default. Each reveal is audit-logged. |
+| **Real-time notifications** | WebSocket push when secrets or members change. |
+| **Per-environment RBAC** | Override member roles at the environment level. Fine-grained, not all-or-nothing. |
+| **GitHub OAuth** | One-click sign-in. Email/password also available. |
+| **CLI tool** | `npm install -g @vaultiify/cli` — manage secrets from your terminal for CI/CD pipelines |
+| **Secret versioning** | Track history, diff versions, rollback any secret |
+
+---
+
+## Quickstart
 
 ### Prerequisites
 
-- **Node.js** ≥ 22
-- **pnpm** ≥ 11 — `npm install -g pnpm`
-- **Docker** — for local Redis
-- **Neon account** — free tier at [neon.tech](https://neon.tech)
-
-### 1. Clone & Install
+- Node.js ≥ 22
+- pnpm ≥ 11 (`npm install -g pnpm`)
+- Docker (for local Redis)
+- [Neon](https://neon.tech) account (free tier works)
 
 ```bash
 git clone https://github.com/Mohamediibra7im/vaultify.git
 cd vaultify
 pnpm install
-```
-
-### 2. Start Redis
-
-```bash
 docker compose up -d
-```
-
-### 3. Configure Environment
-
-```bash
 cp apps/api/.env.example apps/api/.env
 ```
 
-Edit `apps/api/.env` with your credentials:
+Edit `apps/api/.env`:
 
 ```env
 DATABASE_URL="postgresql://user:pass@ep-xxx-pooler.neon.tech/dbname?sslmode=require"
@@ -89,315 +77,267 @@ JWT_SECRET=<run: openssl rand -base64 32>
 PORT=4000
 ```
 
-### 4. Initialize Database
-
 ```bash
 cd apps/api
 npx prisma generate
 npx prisma migrate dev --name init
 cd ../..
-```
-
-### 5. Launch
-
-```bash
 pnpm dev
 ```
 
-| Service      | URL                              |
-| ------------ | -------------------------------- |
-| Frontend     | http://localhost:3000            |
-| API          | http://localhost:4000/api        |
-| Health Check | http://localhost:4000/api/health |
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| API | http://localhost:4000/api |
+| Health | http://localhost:4000/api/health |
 
 ---
 
-## 🏗️ Architecture
-
-Vaultify is a **pnpm monorepo** with three applications and one shared package:
+## Architecture
 
 ```
 vaultify/
 ├── apps/
-│   ├── web/          → Next.js 16 dashboard and public site
-│   ├── api/          → NestJS 11 REST API with Prisma and PostgreSQL
-│   └── cli/          → TypeScript CLI for terminal-based secret sync
+│   ├── web/          Next.js 16 dashboard + public site
+│   ├── api/          NestJS 11 REST API + Prisma + PostgreSQL
+│   └── cli/          TypeScript CLI (Commander + Chalk)
 ├── packages/
-│   └── shared-types/ → Shared TypeScript DTOs & enums
-├── docs/             → Product & technical documentation
-└── docker-compose.yml
+│   └── shared-types/ Shared DTOs, enums, types
+├── docs/
+└── docker-compose.yml  (Redis 7 only — DB is Neon)
 ```
 
-### Data Model
+### Data model
 
 ```
 User ──owns──→ Workspace ──has──→ Project ──has──→ Environment ──has──→ Secret
-  │                │                                     │                │
-  └──member──→ WorkspaceMember ──override──→ MemberEnvironment     SecretHistory
+  │                │                                  │                │
+  └──member──→ WorkspaceMember ──override──→ MemberEnvironment    SecretHistory
                    │
               InviteLink, ApiToken, AuditLog, Notification
 ```
 
-### Tech Stack
+### Stack
 
-<table>
-<tr><th>Layer</th><th>Technology</th><th>Version</th></tr>
-<tr><td rowspan="7"><strong>Frontend</strong></td><td>Next.js (App Router)</td><td>16</td></tr>
-<tr><td>React</td><td>19</td></tr>
-<tr><td>Tailwind CSS</td><td>4</td></tr>
-<tr><td>shadcn/ui + Radix UI</td><td>latest</td></tr>
-<tr><td>Motion (Framer Motion)</td><td>12</td></tr>
-<tr><td>Sonner (toasts)</td><td>2</td></tr>
-<tr><td>Socket.IO Client</td><td>4</td></tr>
-<tr><td rowspan="5"><strong>Backend</strong></td><td>NestJS</td><td>11</td></tr>
-<tr><td>Prisma ORM</td><td>7</td></tr>
-<tr><td>Neon (Serverless PostgreSQL)</td><td>—</td></tr>
-<tr><td>Redis (via ioredis)</td><td>7</td></tr>
-<tr><td>Socket.IO</td><td>4</td></tr>
-<tr><td rowspan="3"><strong>Auth</strong></td><td>Passport.js (JWT strategy)</td><td>—</td></tr>
-<tr><td>GitHub OAuth (passport-github2)</td><td>—</td></tr>
-<tr><td>bcrypt</td><td>6</td></tr>
-<tr><td rowspan="2"><strong>Tooling</strong></td><td>TypeScript (strict)</td><td>6.0</td></tr>
-<tr><td>pnpm workspaces</td><td>11+</td></tr>
-</table>
+- **Frontend:** Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · shadcn/ui + Radix · Motion 12 · Socket.IO Client
+- **Backend:** NestJS 11 · Prisma 7 · Neon (serverless PostgreSQL) · Redis 7 · Socket.IO
+- **Auth:** Passport.js (JWT) · passport-github2 · bcrypt
+- **Tooling:** TypeScript 6 (strict) · pnpm workspaces
 
 ---
 
-## 🔒 Security
+## Security
 
-| Layer                  | Implementation                                                     |
-| ---------------------- | ------------------------------------------------------------------ |
-| **Encryption at rest** | AES-256-GCM with unique IV per secret value                        |
-| **Password hashing**   | bcrypt with configurable salt rounds                               |
-| **Invite tokens**      | Stored as cryptographic hashes — raw token never persisted         |
-| **RBAC enforcement**   | Server-side role checks on every endpoint                          |
-| **Secrets masking**    | Values hidden in UI by default; each reveal is audit-logged        |
-| **API token scoping**  | Workspace-scoped tokens for CI/CD with prefix-based identification |
-| **Rate limiting**      | Throttler guard on auth and invite endpoints                       |
+Every layer has one job: make sure the wrong person never sees a plaintext
+secret, and if they do (compromised host, etc.), you know exactly when and how.
+
+| Layer | Implementation |
+|-------|---------------|
+| Encryption at rest | AES-256-GCM, unique IV per secret value |
+| Password hashing | bcrypt, configurable salt rounds |
+| Invite tokens | Stored as cryptographic hashes — raw token never hits the DB |
+| RBAC | Server-side check on every endpoint, not trust-the-client |
+| Secrets masking | Hidden in UI by default, each reveal logged |
+| API tokens | Workspace-scoped, prefix-based identification |
+| Rate limiting | ThrottlerGuard on auth + invite endpoints |
 
 ---
 
-## 📡 API Reference
+## API
 
-All endpoints are prefixed with `/api` and require JWT authentication unless noted.
+All endpoints under `/api`. JWT auth required unless noted.
 
 <details>
-<summary><strong>🔑 Authentication</strong></summary>
+<summary><strong>Auth</strong></summary>
 
-| Method  | Endpoint                | Description                         |
-| ------- | ----------------------- | ----------------------------------- |
-| `POST`  | `/auth/register`        | Register with email, password, name |
-| `POST`  | `/auth/login`           | Login → returns JWT                 |
-| `GET`   | `/auth/github`          | GitHub OAuth redirect               |
-| `GET`   | `/auth/github/callback` | GitHub OAuth callback               |
-| `GET`   | `/auth/me`              | Get current user profile            |
-| `PATCH` | `/auth/me`              | Update profile name                 |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/auth/register` | Register (email, password, name) |
+| POST | `/auth/login` | Login → JWT |
+| GET | `/auth/github` | GitHub OAuth redirect |
+| GET | `/auth/github/callback` | GitHub OAuth callback |
+| GET | `/auth/me` | Current user profile |
+| PATCH | `/auth/me` | Update profile name |
 </details>
 
 <details>
-<summary><strong>🏢 Workspaces</strong></summary>
+<summary><strong>Workspaces</strong></summary>
 
-| Method   | Endpoint                            | Description                           |
-| -------- | ----------------------------------- | ------------------------------------- |
-| `POST`   | `/workspaces`                       | Create workspace                      |
-| `GET`    | `/workspaces`                       | List my workspaces                    |
-| `GET`    | `/workspaces/:id`                   | Get workspace with members & projects |
-| `PATCH`  | `/workspaces/:id`                   | Update workspace                      |
-| `DELETE` | `/workspaces/:id`                   | Delete workspace                      |
-| `GET`    | `/workspaces/:id/members`           | List workspace members                |
-| `PATCH`  | `/workspaces/:id/members/:mid/role` | Update member role                    |
-| `DELETE` | `/workspaces/:id/members/:mid`      | Remove member                         |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/workspaces` | Create |
+| GET | `/workspaces` | List mine |
+| GET | `/workspaces/:id` | Get + members + projects |
+| PATCH | `/workspaces/:id` | Update |
+| DELETE | `/workspaces/:id` | Delete |
+| GET | `/workspaces/:id/members` | List members |
+| PATCH | `/workspaces/:id/members/:mid/role` | Update role |
+| DELETE | `/workspaces/:id/members/:mid` | Remove member |
 </details>
 
 <details>
-<summary><strong>📁 Projects</strong></summary>
+<summary><strong>Projects</strong></summary>
 
-| Method   | Endpoint                    | Description                     |
-| -------- | --------------------------- | ------------------------------- |
-| `POST`   | `/workspaces/:wid/projects` | Create project                  |
-| `GET`    | `/workspaces/:wid/projects` | List projects in workspace      |
-| `GET`    | `/projects/:id`             | Get project with environments   |
-| `PATCH`  | `/projects/:id`             | Update project name/description |
-| `DELETE` | `/projects/:id`             | Delete project                  |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/workspaces/:wid/projects` | Create |
+| GET | `/workspaces/:wid/projects` | List in workspace |
+| GET | `/projects/:id` | Get + environments |
+| PATCH | `/projects/:id` | Update name/description |
+| DELETE | `/projects/:id` | Delete |
 </details>
 
 <details>
-<summary><strong>🌍 Environments</strong></summary>
+<summary><strong>Environments</strong></summary>
 
-| Method   | Endpoint                           | Description              |
-| -------- | ---------------------------------- | ------------------------ |
-| `POST`   | `/projects/:pid/environments`      | Create environment       |
-| `GET`    | `/projects/:pid/environments`      | List environments        |
-| `GET`    | `/environments/:id`                | Get environment details  |
-| `GET`    | `/projects/:pid/environments/diff` | Compare two environments |
-| `DELETE` | `/environments/:id`                | Delete environment       |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/projects/:pid/environments` | Create |
+| GET | `/projects/:pid/environments` | List |
+| GET | `/environments/:id` | Get details |
+| GET | `/projects/:pid/environments/diff` | Compare two environments |
+| DELETE | `/environments/:id` | Delete |
 </details>
 
 <details>
-<summary><strong>🔐 Secrets</strong></summary>
+<summary><strong>Secrets</strong></summary>
 
-| Method   | Endpoint                            | Description                           |
-| -------- | ----------------------------------- | ------------------------------------- |
-| `GET`    | `/environments/:eid/secrets`        | List secrets (values masked)          |
-| `POST`   | `/environments/:eid/secrets`        | Create secret                         |
-| `GET`    | `/secrets/:id`                      | Get single secret                     |
-| `PATCH`  | `/secrets/:id`                      | Update secret                         |
-| `DELETE` | `/secrets/:id`                      | Delete secret                         |
-| `POST`   | `/secrets/:id/reveal`               | Reveal decrypted value (audit-logged) |
-| `GET`    | `/secrets/:id/history`              | Get version history                   |
-| `POST`   | `/secrets/:id/rollback`             | Rollback to previous version          |
-| `POST`   | `/environments/:eid/secrets/import` | Import from .env format               |
-| `GET`    | `/environments/:eid/secrets/export` | Export as .env format                 |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/environments/:eid/secrets` | List (values masked) |
+| POST | `/environments/:eid/secrets` | Create |
+| GET | `/secrets/:id` | Get single |
+| PATCH | `/secrets/:id` | Update |
+| DELETE | `/secrets/:id` | Delete |
+| POST | `/secrets/:id/reveal` | Decrypt + reveal (logged) |
+| GET | `/secrets/:id/history` | Version history |
+| POST | `/secrets/:id/rollback` | Rollback to previous version |
+| POST | `/environments/:eid/secrets/import` | Import .env format |
+| GET | `/environments/:eid/secrets/export` | Export .env format |
 </details>
 
 <details>
-<summary><strong>🔗 Invite Links</strong></summary>
+<summary><strong>Invite Links</strong></summary>
 
-| Method | Endpoint                                   | Description                     |
-| ------ | ------------------------------------------ | ------------------------------- |
-| `POST` | `/workspaces/:wid/invite-link`             | Generate invite link            |
-| `POST` | `/workspaces/:wid/invite-links`            | Create invite link with options |
-| `GET`  | `/workspaces/:wid/invite-links`            | List invite links               |
-| `POST` | `/workspaces/:wid/invite-links/:id/revoke` | Revoke invite                   |
-| `GET`  | `/invite/:token`                           | Validate & preview invite       |
-| `POST` | `/invite/:token/accept`                    | Accept invite & join workspace  |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/workspaces/:wid/invite-links` | Create with options |
+| GET | `/workspaces/:wid/invite-links` | List |
+| POST | `/workspaces/:wid/invite-links/:id/revoke` | Revoke |
+| GET | `/invite/:token` | Validate + preview |
+| POST | `/invite/:token/accept` | Accept + join |
 </details>
 
 <details>
-<summary><strong>🛡️ Member Environment Access</strong></summary>
+<summary><strong>Member Environment Access</strong></summary>
 
-| Method   | Endpoint                                          | Description                         |
-| -------- | ------------------------------------------------- | ----------------------------------- |
-| `GET`    | `/workspaces/:wid/members/:mid/environments`      | List member's environment overrides |
-| `PUT`    | `/workspaces/:wid/members/:mid/environments/:eid` | Grant/update environment access     |
-| `DELETE` | `/workspaces/:wid/members/:mid/environments/:eid` | Revoke environment access           |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/workspaces/:wid/members/:mid/environments` | List overrides |
+| PUT | `/workspaces/:wid/members/:mid/environments/:eid` | Grant/update |
+| DELETE | `/workspaces/:wid/members/:mid/environments/:eid` | Revoke |
 </details>
 
 <details>
-<summary><strong>📊 Audit, Tokens & Notifications</strong></summary>
+<summary><strong>Audit, Tokens, Notifications</strong></summary>
 
-| Method   | Endpoint                      | Description        |
-| -------- | ----------------------------- | ------------------ |
-| `GET`    | `/workspaces/:id/audit-logs`  | List audit logs    |
-| `POST`   | `/workspaces/:wid/tokens`     | Create API token   |
-| `GET`    | `/workspaces/:wid/tokens`     | List API tokens    |
-| `DELETE` | `/workspaces/:wid/tokens/:id` | Revoke API token   |
-| `GET`    | `/notifications`              | List notifications |
-| `GET`    | `/notifications/unread-count` | Get unread count   |
-| `POST`   | `/notifications/:id/read`     | Mark as read       |
-| `POST`   | `/notifications/read-all`     | Mark all as read   |
-
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/workspaces/:id/audit-logs` | List audit logs |
+| POST | `/workspaces/:wid/tokens` | Create API token |
+| GET | `/workspaces/:wid/tokens` | List tokens |
+| DELETE | `/workspaces/:wid/tokens/:id` | Revoke token |
+| GET | `/notifications` | List notifications |
+| GET | `/notifications/unread-count` | Unread count |
+| POST | `/notifications/:id/read` | Mark read |
+| POST | `/notifications/read-all` | Mark all read |
 </details>
 
 ---
 
-## 🛠️ Development
-
-### Available Scripts
+## Development
 
 ```bash
-# Root — run everything
-pnpm dev              # Start both apps in watch mode
-pnpm build            # Production build
-pnpm lint             # Lint all packages
+pnpm dev                  # All services in watch mode
+pnpm build                # Production build (web only)
+pnpm build:all            # Build everything
+pnpm lint                 # Lint all packages
 
-# Frontend (apps/web)
+# Frontend only
 pnpm --filter @vaultify/web dev
 pnpm --filter @vaultify/web build
 
-# Backend (apps/api)
+# Backend only
 pnpm --filter @vaultify/api dev
 pnpm --filter @vaultify/api build
 pnpm --filter @vaultify/api prisma:generate
 pnpm --filter @vaultify/api prisma:migrate
 pnpm --filter @vaultify/api prisma:studio
+
+# CLI
+pnpm --filter @vaultiify/cli build
 ```
 
-### Environment Variables
+### Environment variables
 
-| Variable               | Required | Description                                           |
-| ---------------------- | :------: | ----------------------------------------------------- |
-| `DATABASE_URL`         |    ✅    | Pooled Neon connection string (runtime)               |
-| `DIRECT_URL`           |    ✅    | Unpooled Neon connection string (migrations)          |
-| `REDIS_URL`            |    ✅    | Redis connection — `redis://localhost:6379` for local |
-| `JWT_SECRET`           |    ✅    | 32-byte random key — `openssl rand -base64 32`        |
-| `PORT`                 |    —     | API port (default: `4000`)                            |
-| `FRONTEND_URL`         |    —     | CORS origin (default: `http://localhost:3000`)        |
-| `GITHUB_CLIENT_ID`     |    —     | GitHub OAuth app client ID                            |
-| `GITHUB_CLIENT_SECRET` |    —     | GitHub OAuth app client secret                        |
-| `CONTACT_EMAIL`        |    —     | Contact form recipient email                          |
-
-### Design System
-
-Vaultify uses a dark-first vault aesthetic with a premium, operational feel:
-
-- **Background** — Near-black charcoal (`oklch(0.145 0 0)`)
-- **Primary accent** — Emerald/teal (`oklch(0.596 0.145 163.2)`)
-- **Cards** — Glassmorphism with `backdrop-blur-xl` and subtle border glow
-- **Typography** — Inter (sans) + JetBrains Mono (code/secrets)
-- **Animations** — Motion (Framer Motion v12) — fade-up on scroll, staggered children, hover effects
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `DATABASE_URL` | Yes | Pooled Neon connection string |
+| `DIRECT_URL` | Yes | Unpooled (for migrations) |
+| `REDIS_URL` | Yes | `redis://localhost:6379` locally |
+| `JWT_SECRET` | Yes | `openssl rand -base64 32` |
+| `PORT` | No | Default 4000 |
+| `FRONTEND_URL` | No | CORS origin, default `http://localhost:3000` |
+| `GITHUB_CLIENT_ID` | No | For GitHub OAuth |
+| `GITHUB_CLIENT_SECRET` | No | For GitHub OAuth |
+| `CONTACT_EMAIL` | No | Contact form recipient |
 
 ---
 
-## 📖 Documentation
+## Design
 
-| Document                                             | Contents                                                  |
-| ---------------------------------------------------- | --------------------------------------------------------- |
-| [Product Plan](./docs/product-plan.md)               | Vision, phased roadmap, data model, security architecture |
-| [Implementation Plan](./docs/implementation-plan.md) | Build milestones, API contracts, encryption patterns      |
-| [Architecture](./docs/architecture.md)               | Monorepo structure, tech stack, design system             |
-| [Setup Guide](./docs/setup.md)                       | Prerequisites, environment config, running instructions   |
-| [API Overview](./docs/api-overview.md)               | All endpoints with request/response DTOs                  |
+Dark-first vault aesthetic. Not flashy — operational.
+
+- **Background:** Near-black charcoal `oklch(0.145 0 0)`
+- **Accent:** Emerald/teal `oklch(0.596 0.145 163.2)`
+- **Cards:** Glassmorphism, `backdrop-blur-xl`, subtle border glow
+- **Fonts:** Inter (UI) + JetBrains Mono (secrets/code)
+- **Animation:** Motion v12 — fade-up on scroll, staggered children, hover states
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-- [x] Monorepo with pnpm workspaces
-- [x] Auth system (email/password + GitHub OAuth + JWT)
+- [x] pnpm monorepo
+- [x] Auth (email/password + GitHub OAuth + JWT)
 - [x] Workspace, Project, Environment CRUD
-- [x] Secret CRUD with AES-256-GCM encryption
+- [x] Secret CRUD + AES-256-GCM encryption
 - [x] .env import/export + version history + rollback
-- [x] RBAC with per-environment role overrides
-- [x] Invite link system
-- [x] Audit logs, API tokens, in-app notifications
+- [x] RBAC with per-environment overrides
+- [x] Invite links
+- [x] Audit logs, API tokens, notifications
 - [x] Real-time WebSocket sync
-- [x] Premium dark-themed dashboard & landing page
-- [x] CLI tool for CI/CD integration
-- [ ] Envelope encryption (master key → workspace data key → secrets)
+- [x] Dark dashboard + landing page
+- [x] CLI tool
+- [ ] Envelope encryption (master key → workspace key → secrets)
 - [ ] Frontend test suite
 - [ ] Self-hosted Docker deployment guide
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a PR.
-
-Quick start:
-
-1. Fork and clone the repo
-2. Install dependencies: `pnpm install`
-3. Start services: `pnpm dev`
-4. Create a branch: `git checkout -b feat/your-feature`
-5. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
-6. Push and open a PR against `main`
+See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: fork, branch (`feat/` /
+`fix/` / `chore/`), Conventional Commits, PR against `main`.
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the [MIT License](./LICENSE).
+MIT. See [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
-  Built with ❤️ by <a href="https://github.com/Mohamediibra7im">Mohamed Ibrahim</a>
+  <a href="https://github.com/Mohamediibra7im/vaultify">Mohamed Ibrahim</a>
 </p>
