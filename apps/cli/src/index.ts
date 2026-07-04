@@ -182,45 +182,111 @@ program
   .description(chalk.bold('Vaultify CLI — manage secrets from your terminal'));
 
 // ─── login ───────────────────────────────────────────────────
+const DEFAULT_API_URL = 'https://vaultify-api.vercel.app/api';
+
 program
   .command('login')
-  .description('Authenticate with Vaultify API')
-  .argument('<api-url>', 'Vaultify API base URL (e.g. https://vaultify-api.vercel.app/api)')
-  .option('--token <token>', 'Save an API token directly (for GitHub OAuth users)')
+  .description('Authenticate with Vaultify')
+  .argument('[api-url]', 'API base URL (default: https://vaultify-api.vercel.app/api)', DEFAULT_API_URL)
+  .option('--token <token>', 'Skip interactive login — save an API token directly')
   .addHelpText(
     'after',
     `
-Prompts for email and password, then saves your session token to ~/.vaultify/config.json.
-With --token, saves an API token directly (create one from the dashboard Settings → API Tokens).
-You can also set VAULTIFY_TOKEN and VAULTIFY_API_URL env vars instead.
+Interactive login with method selection:
+
+  vaultify login                         → uses default API URL
+  vaultify login https://my-api.com/api  → uses custom URL
+  vaultify login --token <token>         → save token directly (for CI/CD)
+
+  API tokens can be created from the Vaultify dashboard:
+    Settings → API Tokens → Create Token
+
+  Or set env vars instead of logging in:
+    export VAULTIFY_TOKEN=your-token
+    export VAULTIFY_API_URL=https://vaultify-api.vercel.app/api
 `,
   )
   .action(async (apiUrl: string, opts: { token?: string }) => {
     try {
+      // Save API URL first
       config.setApiUrl(apiUrl);
 
+      // --token flag: skip interactive flow
       if (opts.token) {
         config.setToken(opts.token);
-        console.log(chalk.green('✓ Token saved for'), chalk.bold(apiUrl));
+        console.log();
+        console.log(chalk.green('✓ Token saved'));
+        console.log(chalk.dim('  API:'), apiUrl);
+        console.log();
         return;
       }
 
-      const email = await promptInput(chalk.dim('Email: '));
-      const password = await promptPassword(chalk.dim('Password: '));
+      // Interactive login
+      console.log();
+      console.log(chalk.bold.cyan('🔐 Vaultify Login'));
+      console.log(chalk.dim('  API: ') + apiUrl);
+      console.log();
+      console.log(chalk.dim('  Choose login method:'));
+      console.log();
+      console.log('  ' + chalk.bold('1') + '  ' + chalk.white('Email & Password') + chalk.dim('  — login with your Vaultify account'));
+      console.log('  ' + chalk.bold('2') + '  ' + chalk.white('API Token') + chalk.dim('      — for GitHub OAuth users or CI/CD'));
+      console.log();
+      console.log(chalk.dim('  Don\'t have a token? Create one from the dashboard:'));
+      console.log(chalk.dim('  ') + chalk.cyan('https://vaultify.io/dashboard/settings'));
+      console.log();
 
-      console.log(chalk.dim('Authenticating…'));
+      const method = await promptInput(chalk.bold('  Select method [1/2]: '));
 
-      const data = await apiPost<LoginResponse>(apiUrl, '/auth/login', {
-        email,
-        password,
-      });
+      if (method === '2' || method.toLowerCase() === 'token') {
+        console.log();
+        console.log(chalk.dim('  Paste your API token:'));
+        console.log(chalk.dim('  (create one at Settings → API Tokens in the dashboard)'));
+        console.log();
+        const token = await promptInput(chalk.bold('  Token: '));
 
-      config.setToken(data.token);
+        if (!token.trim()) {
+          console.error(chalk.red('\n  ✘ Token cannot be empty'));
+          process.exit(1);
+        }
 
-      console.log(chalk.green('✓ Logged in as'), chalk.bold(data.user.email));
+        config.setToken(token.trim());
+        console.log();
+        console.log(chalk.green('  ✓ Token saved'));
+        console.log();
+      } else {
+        // Email/password login
+        console.log();
+        const email = await promptInput(chalk.bold('  Email: '));
+
+        if (!email.trim()) {
+          console.error(chalk.red('\n  ✘ Email cannot be empty'));
+          process.exit(1);
+        }
+
+        const password = await promptPassword(chalk.bold('  Password: '));
+
+        if (!password) {
+          console.error(chalk.red('\n  ✘ Password cannot be empty'));
+          process.exit(1);
+        }
+
+        console.log();
+        console.log(chalk.dim('  Authenticating…'));
+
+        const data = await apiPost<LoginResponse>(apiUrl, '/auth/login', {
+          email,
+          password,
+        });
+
+        config.setToken(data.token);
+
+        console.log();
+        console.log(chalk.green('  ✓ Logged in as'), chalk.bold(data.user.email));
+        console.log();
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
+      console.error(chalk.red(`\n  ✘ ${message}`));
       process.exit(1);
     }
   });
