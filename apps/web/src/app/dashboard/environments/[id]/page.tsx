@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import { getSocket, useWorkspaceSubscription } from "@/lib/websocket";
+// ponytail: no WebSocket on Vercel (serverless) — refetch on tab focus instead
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,6 +182,12 @@ export default function EnvironmentDetailPage({
   useEffect(() => {
     if (!token || !envId) return;
 
+    const fetchSecrets = () =>
+      api.get<Secret[]>(`/environments/${envId}/secrets`, token)
+        .then(setSecrets)
+        .catch(() => {});
+
+    // initial load
     Promise.all([
       api.get<EnvDetail>(`/environments/${envId}`, token),
       api.get<Secret[]>(`/environments/${envId}/secrets`, token),
@@ -196,21 +202,13 @@ export default function EnvironmentDetailPage({
       })
       .finally(() => setLoading(false));
 
-    const socket = getSocket();
-    if (socket) {
-      const onSecretChange = () => {
-        api.get<Secret[]>(`/environments/${envId}/secrets`, token)
-          .then(setSecrets)
-          .catch((err) => toast.error(err instanceof Error ? err.message : "Failed to refresh secrets"));
-      };
-      socket.on('secret:changed', onSecretChange);
-      return () => {
-        socket.off('secret:changed', onSecretChange);
-      };
-    }
+    // ponytail: refetch secrets when user returns to tab (no WebSocket on Vercel)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchSecrets();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [token, envId, router]);
-
-  useWorkspaceSubscription(env?.project?.workspaceId);
 
   async function handleCreateSecret(e: React.FormEvent) {
     e.preventDefault();
