@@ -194,24 +194,6 @@ pnpm --filter @vaultiify/cli build
 
 ---
 
-## Roadmap
-
-- [x] pnpm monorepo
-- [x] Auth (email/password + GitHub OAuth + JWT)
-- [x] Workspace, Project, Environment CRUD
-- [x] Secret CRUD + AES-256-GCM encryption
-- [x] .env import/export + version history + rollback
-- [x] RBAC with per-environment overrides
-- [x] Invite links
-- [x] Audit logs, API tokens, notifications
-- [x] Dark dashboard + landing page
-- [x] CLI tool
-- [ ] Envelope encryption (master key → workspace key → secrets)
-- [ ] Frontend test suite
-- [ ] Self-hosted Docker deployment guide
-
----
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: fork, branch (`feat/` /
@@ -226,5 +208,5 @@ MIT. See [LICENSE](LICENSE).
 ---
 
 <p align="center">
-  <a href="https://github.com/Mohamediibra7im/vaultify">Mohamed Ibrahim</a>
+  Made with ❤️ by <a href="https://mohamediibrahim.dev">Mohamed Ibrahim</a>
 </p>
