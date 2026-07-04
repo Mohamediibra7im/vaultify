@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ApiTokenModule } from '../api-token/api-token.module';
 import { JwtOrApiTokenGuard } from './guards/jwt-or-api-token.guard';
 
 @Module({
-  imports: [ApiTokenModule],
+  imports: [forwardRef(() => ApiTokenModule)],
   providers: [JwtOrApiTokenGuard],
   exports: [JwtOrApiTokenGuard],
 })

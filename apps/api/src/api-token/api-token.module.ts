@@ -1,4 +1,4 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, forwardRef } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CommonModule } from '../common/common.module';
 import { ApiTokenController } from './api-token.controller';
@@ -6,7 +6,7 @@ import { ApiTokenService } from './api-token.service';
 
 @Global()
 @Module({
-  imports: [PrismaModule, CommonModule],
+  imports: [PrismaModule, forwardRef(() => CommonModule)],
   controllers: [ApiTokenController],
   providers: [ApiTokenService],
   exports: [ApiTokenService],
