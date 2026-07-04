@@ -8,12 +8,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { ProjectService } from './project.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiTokenGuard)
 @Controller()
 export class ProjectController {
   constructor(private readonly project: ProjectService) {}

@@ -7,12 +7,12 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { WorkspaceMemberEnvironmentService } from './workspace-member-environment.service';
 import { SetMemberEnvironmentRoleDto } from './dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiTokenGuard)
 @Controller('workspaces/:workspaceId/members/:memberId/environments')
 export class WorkspaceMemberEnvironmentController {
   constructor(

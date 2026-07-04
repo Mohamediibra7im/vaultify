@@ -7,7 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { InviteLinkService } from './invite-link.service';
 import { CreateInviteLinkDto } from './dto/create-invite-link.dto';
@@ -17,7 +17,7 @@ export class InviteLinkController {
   constructor(private readonly inviteLink: InviteLinkService) {}
 
   /** Generate invite link with optional params (new multi-link API) */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtOrApiTokenGuard)
   @Post('workspaces/:workspaceId/invite-links')
   create(
     @CurrentUser() user: { sub: string },
@@ -28,7 +28,7 @@ export class InviteLinkController {
   }
 
   /** Generate invite link (backward compat, no body, same as Phase 1) */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtOrApiTokenGuard)
   @Post('workspaces/:workspaceId/invite-link')
   generate(
     @CurrentUser() user: { sub: string },
@@ -38,7 +38,7 @@ export class InviteLinkController {
   }
 
   /** List all invite links for a workspace (owner only) */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtOrApiTokenGuard)
   @Get('workspaces/:workspaceId/invite-links')
   list(
     @CurrentUser() user: { sub: string },
@@ -48,7 +48,7 @@ export class InviteLinkController {
   }
 
   /** Revoke a specific invite link */
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtOrApiTokenGuard)
   @Post('workspaces/:workspaceId/invite-links/:id/revoke')
   revoke(
     @CurrentUser() user: { sub: string },
@@ -67,7 +67,7 @@ export class InviteLinkController {
 
   /** Accept invite and join workspace */
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtOrApiTokenGuard)
   @Post('invite/:token/accept')
   accept(
     @CurrentUser() user: { sub: string },

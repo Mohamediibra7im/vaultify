@@ -1,11 +1,11 @@
 import { Controller, Get, Param, Query, Res, UseGuards, ForbiddenException } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { Response } from 'express';
 import { AuditLogService } from './audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiTokenGuard)
 @Controller('workspaces')
 export class AuditLogController {
   constructor(

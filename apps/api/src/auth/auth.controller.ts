@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -38,7 +38,7 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtOrApiTokenGuard)
   @Get('me')
   me(@CurrentUser() user: { sub: string }) {
     return this.auth.me(user.sub);

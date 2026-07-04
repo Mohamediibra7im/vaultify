@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Param, Query, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { NotificationService } from './notification.service';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiTokenGuard)
 @Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}

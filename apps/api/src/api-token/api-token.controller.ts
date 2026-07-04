@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { ApiTokenService } from './api-token.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { IsString, MinLength } from 'class-validator';
@@ -10,7 +10,7 @@ class CreateApiTokenDto {
   name!: string;
 }
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiTokenGuard)
 @Controller('workspaces/:workspaceId/tokens')
 export class ApiTokenController {
   constructor(private readonly apiToken: ApiTokenService) {}

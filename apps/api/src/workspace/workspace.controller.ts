@@ -8,12 +8,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtOrApiTokenGuard } from '../common/guards/jwt-or-api-token.guard';
 import { WorkspaceService } from './workspace.service';
 import { CreateWorkspaceDto, UpdateMemberRoleDto, UpdateWorkspaceDto } from './dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtOrApiTokenGuard)
 @Controller('workspaces')
 export class WorkspaceController {
   constructor(private readonly workspace: WorkspaceService) {}
