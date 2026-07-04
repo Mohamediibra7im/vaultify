@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,10 +22,27 @@ import {
   Trash2,
   Calendar,
   Lock,
+  User,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+
+type TabId = "profile" | "workspace" | "security" | "members";
+
+interface Tab {
+  id: TabId;
+  label: string;
+  icon: React.ElementType;
+}
+
+const tabs: Tab[] = [
+  { id: "profile", label: "Profile", icon: User },
+  { id: "workspace", label: "Workspace", icon: Building2 },
+  { id: "security", label: "Security", icon: Shield },
+  { id: "members", label: "Members", icon: Users },
+];
 
 interface Workspace {
   id: string;
@@ -41,6 +59,7 @@ interface ApiToken {
 
 export default function SettingsGeneralPage() {
   const { user, token } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabId>("profile");
 
   // Profile
   const [userName, setUserName] = useState("");
@@ -210,7 +229,7 @@ export default function SettingsGeneralPage() {
           Settings
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Manage your account, workspace, and billing preferences.
+          Manage your account, workspace, and security preferences.
         </p>
       </motion.div>
 
@@ -219,326 +238,364 @@ export default function SettingsGeneralPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.05 }}
-        className="flex gap-2 border-b border-white/5 pb-2 mb-6"
+        className="flex gap-1 border-b border-white/5 pb-0"
       >
-        <Link
-          href="/dashboard/settings"
-          className="rounded-lg border bg-primary/10 text-primary border-primary/30 px-4 py-2 text-xs font-medium transition-colors"
-        >
-          <Settings className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
-          General
-        </Link>
-        <Link
-          href="/dashboard/settings/members"
-          className="rounded-lg border border-white/5 text-muted-foreground px-4 py-2 text-xs font-medium transition-colors hover:text-foreground hover:border-white/10"
-        >
-          <Users className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
-          Members
-        </Link>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          const isMembers = tab.id === "members";
+
+          if (isMembers) {
+            return (
+              <Link
+                key={tab.id}
+                href="/dashboard/settings/members"
+                className={cn(
+                  "flex items-center gap-1.5 rounded-t-lg border border-b-0 px-4 py-2.5 text-xs font-medium transition-colors",
+                  "border-white/5 text-muted-foreground hover:text-foreground hover:border-white/10",
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </Link>
+            );
+          }
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-t-lg border border-b-0 px-4 py-2.5 text-xs font-medium transition-colors",
+                isActive
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "border-white/5 text-muted-foreground hover:text-foreground hover:border-white/10",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {tab.label}
+            </button>
+          );
+        })}
       </motion.div>
 
-      {loadingProfile ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        </div>
-      ) : (
-        <>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Profile Section */}
+      {/* Tab Content */}
+      <AnimatePresence mode="wait">
+        {activeTab === "profile" && (
           <motion.div
+            key="profile"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-6"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
-                <Settings className="h-5 w-5 text-primary" />
+            {loadingProfile ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Profile Information
-                </h2>
-                <p className="text-[10px] text-muted-foreground">
-                  Update your display name and identifiers.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="name"
-                  className="text-[9px] uppercase tracking-wider text-muted-foreground/80"
-                >
-                  Full Name
-                </Label>
-                <Input
-                  id="name"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  disabled={savingProfile}
-                  className="h-9 bg-zinc-950/40 border-white/5 hover:border-white/10 focus-visible:ring-primary/20 text-xs font-mono"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-[9px] uppercase tracking-wider text-muted-foreground/80">
-                  Email Address
-                </Label>
-                <Input
-                  value={user.email}
-                  disabled
-                  className="h-9 bg-zinc-900/30 border-white/5 text-muted-foreground/60 text-xs font-mono cursor-not-allowed"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                size="sm"
-                disabled={
-                  savingProfile ||
-                  userName.trim() === user.name ||
-                  !userName.trim()
-                }
-                className="h-8 text-[10px] w-full gap-1.5"
-              >
-                {savingProfile ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Save className="h-3.5 w-3.5" />
-                )}
-                Save Profile Changes
-              </Button>
-            </form>
-          </motion.div>
-
-          {/* Workspace Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-6"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Workspace Settings
-                </h2>
-                <p className="text-[10px] text-muted-foreground">
-                  Rename your primary workspace.
-                </p>
-              </div>
-            </div>
-
-            {workspaces.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">
-                No workspaces found.
-              </p>
             ) : (
-              <form onSubmit={handleSaveWorkspace} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="wsName"
-                    className="text-[9px] uppercase tracking-wider text-muted-foreground/80"
-                  >
-                    Workspace Name
-                  </Label>
-                  <Input
-                    id="wsName"
-                    value={workspaceName}
-                    onChange={(e) => setWorkspaceName(e.target.value)}
-                    disabled={savingWorkspace}
-                    className="h-9 bg-zinc-950/40 border-white/5 hover:border-white/10 focus-visible:ring-primary/20 text-xs font-mono"
-                    required
-                  />
-                </div>
+              <div className="max-w-lg">
+                <div className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                        Profile Information
+                      </h2>
+                      <p className="text-[10px] text-muted-foreground">
+                        Update your display name and identifiers.
+                      </p>
+                    </div>
+                  </div>
 
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={
-                    savingWorkspace ||
-                    workspaceName.trim() === workspaces[0]?.name ||
-                    !workspaceName.trim()
-                  }
-                  className="h-8 text-[10px] w-full gap-1.5"
-                >
-                  {savingWorkspace ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Save className="h-3.5 w-3.5" />
-                  )}
-                  Update Workspace Name
-                </Button>
-              </form>
+                  <form onSubmit={handleSaveProfile} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="name"
+                        className="text-[9px] uppercase tracking-wider text-muted-foreground/80"
+                      >
+                        Full Name
+                      </Label>
+                      <Input
+                        id="name"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        disabled={savingProfile}
+                        className="h-9 bg-zinc-950/40 border-white/5 hover:border-white/10 focus-visible:ring-primary/20 text-xs font-mono"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[9px] uppercase tracking-wider text-muted-foreground/80">
+                        Email Address
+                      </Label>
+                      <Input
+                        value={user.email}
+                        disabled
+                        className="h-9 bg-zinc-900/30 border-white/5 text-muted-foreground/60 text-xs font-mono cursor-not-allowed"
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={
+                        savingProfile ||
+                        userName.trim() === user.name ||
+                        !userName.trim()
+                      }
+                      className="h-8 text-[10px] w-full gap-1.5"
+                    >
+                      {savingProfile ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5" />
+                      )}
+                      Save Profile Changes
+                    </Button>
+                  </form>
+                </div>
+              </div>
             )}
           </motion.div>
-        </div>
+        )}
 
-        {/* Session Token + API Tokens row */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="grid gap-6 md:grid-cols-2 mt-6"
-        >
-          {/* Session Token Card */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
-                <Lock className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">Active Session Token (JWT)</h2>
-                <p className="text-[10px] text-muted-foreground">Your current authentication token for API access.</p>
+        {activeTab === "workspace" && (
+          <motion.div
+            key="workspace"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="max-w-lg">
+              <div className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                      Workspace Settings
+                    </h2>
+                    <p className="text-[10px] text-muted-foreground">
+                      Rename your primary workspace.
+                    </p>
+                  </div>
+                </div>
+
+                {workspaces.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    No workspaces found.
+                  </p>
+                ) : (
+                  <form onSubmit={handleSaveWorkspace} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label
+                        htmlFor="wsName"
+                        className="text-[9px] uppercase tracking-wider text-muted-foreground/80"
+                      >
+                        Workspace Name
+                      </Label>
+                      <Input
+                        id="wsName"
+                        value={workspaceName}
+                        onChange={(e) => setWorkspaceName(e.target.value)}
+                        disabled={savingWorkspace}
+                        className="h-9 bg-zinc-950/40 border-white/5 hover:border-white/10 focus-visible:ring-primary/20 text-xs font-mono"
+                        required
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={
+                        savingWorkspace ||
+                        workspaceName.trim() === workspaces[0]?.name ||
+                        !workspaceName.trim()
+                      }
+                      className="h-8 text-[10px] w-full gap-1.5"
+                    >
+                      {savingWorkspace ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Save className="h-3.5 w-3.5" />
+                      )}
+                      Update Workspace Name
+                    </Button>
+                  </form>
+                )}
               </div>
             </div>
-            <div className="flex gap-2 items-center">
-              <Input
-                type={showSessionToken ? "text" : "password"}
-                value={token}
-                readOnly
-                className="h-8 bg-zinc-950/40 border-white/5 text-[9px] font-mono flex-1 select-all"
-              />
-              <button
-                onClick={() => setShowSessionToken(!showSessionToken)}
-                className="p-1.5 border border-white/5 bg-zinc-900/30 rounded-lg hover:text-primary transition shrink-0"
-                title={showSessionToken ? "Hide token" : "Reveal token"}
-              >
-                {showSessionToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              </button>
-              <button
-                onClick={() => copyToClipboard(token)}
-                className="p-1.5 border border-white/5 bg-zinc-900/30 rounded-lg hover:text-primary transition shrink-0"
-                title="Copy token"
-              >
-                <Copy className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
+          </motion.div>
+        )}
 
-          {/* API Tokens Manager Card */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
-                <Key className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">API Access Tokens</h2>
-                <p className="text-[10px] text-muted-foreground">Tokens allow automated scripts and pipelines to synchronize vault configs.</p>
-              </div>
-            </div>
-
-            {/* Select Workspace */}
-            {workspaces.length > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Workspace Scope</Label>
-                <select
-                  value={selectedWsId}
-                  onChange={(e) => setSelectedWsId(e.target.value)}
-                  className="w-full h-8 bg-zinc-950/40 border border-white/5 hover:border-white/10 rounded-lg px-3 text-[10px] font-mono text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/20"
-                >
-                  {workspaces.map((ws) => (
-                    <option key={ws.id} value={ws.id}>{ws.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Create Token Form */}
-            <form onSubmit={handleCreateToken} className="space-y-3 pt-1 border-t border-white/[0.03]">
-              <div className="space-y-1.5">
-                <Label htmlFor="tokenName" className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Token Name</Label>
-                <div className="flex gap-2">
+        {activeTab === "security" && (
+          <motion.div
+            key="security"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Session Token Card */}
+              <div className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
+                    <Lock className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">Active Session Token (JWT)</h2>
+                    <p className="text-[10px] text-muted-foreground">Your current authentication token for API access.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 items-center">
                   <Input
-                    id="tokenName"
-                    placeholder="e.g. GitHub Actions CI"
-                    value={newTokenName}
-                    onChange={(e) => setNewTokenName(e.target.value)}
-                    disabled={creatingToken}
-                    className="h-8 bg-zinc-950/40 border-white/5 text-xs font-mono flex-1"
-                    required
+                    type={showSessionToken ? "text" : "password"}
+                    value={token}
+                    readOnly
+                    className="h-8 bg-zinc-950/40 border-white/5 text-[9px] font-mono flex-1 select-all"
                   />
-                  <Button type="submit" size="sm" disabled={creatingToken || !newTokenName.trim()} className="h-8 text-[10px] shrink-0">
-                    {creatingToken ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
-                    Generate
-                  </Button>
-                </div>
-              </div>
-            </form>
-
-            {/* Newly Created Token */}
-            {createdTokenVal && (
-              <div className="bg-primary/5 border border-primary/25 rounded-lg p-3 space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 text-primary font-bold">
-                  <Key className="h-4 w-4" />
-                  <span>Save token key:</span>
-                </div>
-                <p className="text-[9.5px] text-muted-foreground leading-normal">Copy it now. You won&apos;t see it again.</p>
-                <div className="flex gap-2">
-                  <code className="bg-black/50 p-2 rounded border border-white/5 select-all flex-1 text-[10px] text-primary truncate">{createdTokenVal}</code>
                   <button
-                    onClick={() => copyToClipboard(createdTokenVal)}
-                    className="p-2 border border-primary/20 bg-zinc-900/50 rounded hover:text-primary transition shrink-0"
+                    onClick={() => setShowSessionToken(!showSessionToken)}
+                    className="p-1.5 border border-white/5 bg-zinc-900/30 rounded-lg hover:text-primary transition shrink-0"
+                    title={showSessionToken ? "Hide token" : "Reveal token"}
+                  >
+                    {showSessionToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => copyToClipboard(token)}
+                    className="p-1.5 border border-white/5 bg-zinc-900/30 rounded-lg hover:text-primary transition shrink-0"
+                    title="Copy token"
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
-            )}
 
-            {/* Token List */}
-            <div className="space-y-2">
-              <Label className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Active Tokens</Label>
-              {loadingTokens ? (
-                <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
-              ) : tokens.length === 0 ? (
-                <p className="text-[10px] text-muted-foreground italic">No API tokens for this workspace.</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {tokens.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between gap-4 p-2.5 rounded-lg bg-black/30 border border-white/5 text-[9px]">
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className="font-bold text-foreground truncate">{t.name}</p>
-                        <p className="text-zinc-500 text-[8px] flex items-center gap-1">
-                          <Calendar className="h-3 w-3 text-zinc-600" />
-                          Created: {new Date(t.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+              {/* API Tokens Manager Card */}
+              <div className="rounded-2xl border border-white/5 bg-zinc-950/45 p-6 backdrop-blur-md space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/20 bg-primary/5">
+                    <Key className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">API Access Tokens</h2>
+                    <p className="text-[10px] text-muted-foreground">Tokens allow automated scripts and pipelines to synchronize vault configs.</p>
+                  </div>
+                </div>
+
+                {/* Select Workspace */}
+                {workspaces.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Workspace Scope</Label>
+                    <select
+                      value={selectedWsId}
+                      onChange={(e) => setSelectedWsId(e.target.value)}
+                      className="w-full h-8 bg-zinc-950/40 border border-white/5 hover:border-white/10 rounded-lg px-3 text-[10px] font-mono text-zinc-300 focus:outline-none focus:ring-1 focus:ring-primary/20"
+                    >
+                      {workspaces.map((ws) => (
+                        <option key={ws.id} value={ws.id}>{ws.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Create Token Form */}
+                <form onSubmit={handleCreateToken} className="space-y-3 pt-1 border-t border-white/[0.03]">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="tokenName" className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Token Name</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="tokenName"
+                        placeholder="e.g. GitHub Actions CI"
+                        value={newTokenName}
+                        onChange={(e) => setNewTokenName(e.target.value)}
+                        disabled={creatingToken}
+                        className="h-8 bg-zinc-950/40 border-white/5 text-xs font-mono flex-1"
+                        required
+                      />
+                      <Button type="submit" size="sm" disabled={creatingToken || !newTokenName.trim()} className="h-8 text-[10px] shrink-0">
+                        {creatingToken ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                        Generate
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Newly Created Token */}
+                {createdTokenVal && (
+                  <div className="bg-primary/5 border border-primary/25 rounded-lg p-3 space-y-2 text-xs">
+                    <div className="flex items-center gap-1.5 text-primary font-bold">
+                      <Key className="h-4 w-4" />
+                      <span>Save token key:</span>
+                    </div>
+                    <p className="text-[9.5px] text-muted-foreground leading-normal">Copy it now. You won&apos;t see it again.</p>
+                    <div className="flex gap-2">
+                      <code className="bg-black/50 p-2 rounded border border-white/5 select-all flex-1 text-[10px] text-primary truncate">{createdTokenVal}</code>
                       <button
-                        onClick={() => handleRevokeToken(t.id, t.name)}
-                        disabled={revokingTokenId === t.id}
-                        className="text-muted-foreground hover:text-destructive p-1 shrink-0 transition"
-                        title="Revoke Token"
+                        onClick={() => copyToClipboard(createdTokenVal)}
+                        className="p-2 border border-primary/20 bg-zinc-900/50 rounded hover:text-primary transition shrink-0"
                       >
-                        {revokingTokenId === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                        <Copy className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
+                  </div>
+                )}
 
-        {/* Confirm Dialog */}
-        <ConfirmDialog
-          open={revokeTokenDialog.open}
-          onClose={() => setRevokeTokenDialog({ open: false, tokenId: null, tokenName: "" })}
-          onConfirm={executeRevokeToken}
-          title="Revoke Access Token"
-          description={`Revoke the API access token "${revokeTokenDialog.tokenName}"? Any external build pipelines or CLI scripts using this token will fail immediately.`}
-          confirmLabel="Revoke Token"
-          variant="danger"
-          loading={revokingTokenId === revokeTokenDialog.tokenId}
-        />
-      </>
-    )}
+                {/* Token List */}
+                <div className="space-y-2">
+                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground/80">Active Tokens</Label>
+                  {loadingTokens ? (
+                    <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
+                  ) : tokens.length === 0 ? (
+                    <p className="text-[10px] text-muted-foreground italic">No API tokens for this workspace.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {tokens.map((t) => (
+                        <div key={t.id} className="flex items-center justify-between gap-4 p-2.5 rounded-lg bg-black/30 border border-white/5 text-[9px]">
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <p className="font-bold text-foreground truncate">{t.name}</p>
+                            <p className="text-zinc-500 text-[8px] flex items-center gap-1">
+                              <Calendar className="h-3 w-3 text-zinc-600" />
+                              Created: {new Date(t.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRevokeToken(t.id, t.name)}
+                            disabled={revokingTokenId === t.id}
+                            className="text-muted-foreground hover:text-destructive p-1 shrink-0 transition"
+                            title="Revoke Token"
+                          >
+                            {revokingTokenId === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={revokeTokenDialog.open}
+        onClose={() => setRevokeTokenDialog({ open: false, tokenId: null, tokenName: "" })}
+        onConfirm={executeRevokeToken}
+        title="Revoke Access Token"
+        description={`Revoke the API access token "${revokeTokenDialog.tokenName}"? Any external build pipelines or CLI scripts using this token will fail immediately.`}
+        confirmLabel="Revoke Token"
+        variant="danger"
+        loading={revokingTokenId === revokeTokenDialog.tokenId}
+      />
     </div>
   );
 }

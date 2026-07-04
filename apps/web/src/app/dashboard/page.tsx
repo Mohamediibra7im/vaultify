@@ -362,19 +362,19 @@ export default function DashboardPage() {
       {/* ── Hologram stats gauges ───────────────── */}
       <section className="grid gap-4 grid-cols-1 md:grid-cols-3">
         <MetricDial
-          label="Secure Workspaces"
+          label="Workspaces"
           value={stats.workspaces}
           detail="Isolated workspace contexts for your teams"
           loading={loading}
         />
         <MetricDial
-          label="Linked Projects"
+          label="Projects"
           value={stats.projects}
           detail="Connected repositories and platforms"
           loading={loading}
         />
         <MetricDial
-          label="Workspace Members"
+          label="Members"
           value={stats.members}
           detail="Users with access to organization secrets"
           loading={loading}
@@ -389,8 +389,8 @@ export default function DashboardPage() {
       {/* ── Activity Timeline + Secret Health ─────── */}
       <section className="grid gap-6 lg:grid-cols-2">
         <CyberPanel
-          title="Security Audit Log"
-          subtitle="Recent activities"
+          title="Audit Log"
+          subtitle="Recent activity"
           rightElement={
             <Link
               href="/dashboard/audit"

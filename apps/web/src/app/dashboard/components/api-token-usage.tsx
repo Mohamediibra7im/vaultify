@@ -221,7 +221,7 @@ export function ApiTokenUsage({ workspaces }: ApiTokenUsageProps) {
 
   return (
     <CyberPanel
-      title="API TOKENS"
+      title="API Tokens"
       subtitle="CI/CD access"
       rightElement={
         <Link
@@ -285,16 +285,7 @@ export function ApiTokenUsage({ workspaces }: ApiTokenUsageProps) {
           ))}
         </div>
 
-        {/* Manage Link */}
-        <div className="mt-4 border-t border-white/[0.03] pt-3">
-          <Link
-            href="/dashboard/settings"
-            className="group inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted hover:text-primary transition-colors"
-          >
-            Manage Tokens{" "}
-            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </div>
+
       </div>
     </CyberPanel>
   );

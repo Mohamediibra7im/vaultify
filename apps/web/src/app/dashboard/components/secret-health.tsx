@@ -67,7 +67,7 @@ function CyberPanel({
 
 function SkeletonLoader() {
   return (
-    <CyberPanel title="SECRET HEALTH" subtitle="Encryption status">
+    <CyberPanel title="Secret Health" subtitle="Encryption status">
       <div className="p-5">
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -238,7 +238,7 @@ export function SecretHealth({ workspaces }: SecretHealthProps) {
     : "Never";
 
   return (
-    <CyberPanel title="SECRET HEALTH" subtitle="Encryption status">
+    <CyberPanel title="Secret Health" subtitle="Encryption status">
       <div className="p-5">
         {/* 2x2 Stat Grid */}
         <div className="grid grid-cols-2 gap-3">

@@ -27,11 +27,13 @@ function CyberPanel({
   className,
   title,
   subtitle,
+  rightElement,
 }: {
   children: React.ReactNode;
   className?: string;
   title?: string;
   subtitle?: string;
+  rightElement?: React.ReactNode;
 }) {
   return (
     <div
@@ -56,6 +58,7 @@ function CyberPanel({
               {title}
             </h2>
           </div>
+          {rightElement}
         </header>
       )}
 
@@ -190,12 +193,23 @@ export function EnvDiffPreview({ workspaces }: EnvDiffPreviewProps) {
   if (loading) return <SkeletonLoader />;
 
   const visibleProjects = projects.slice(0, 5);
-  const multiEnvProjects = visibleProjects.filter((p) => p.environments.length >= 2);
 
   if (visibleProjects.length === 0) return <EmptyState />;
 
   return (
-    <CyberPanel title="ENVIRONMENT DRIFT" subtitle="Configuration sync">
+    <CyberPanel
+      title="Environment Drift"
+      subtitle="Configuration sync"
+      rightElement={
+        <Link
+          href="/dashboard/projects"
+          className="group inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted hover:text-primary transition-colors"
+        >
+          View All{" "}
+          <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      }
+    >
       <div className="divide-y divide-white/[0.03]">
         {visibleProjects.map((project) => {
           const hasMultipleEnvs = project.environments.length >= 2;
@@ -265,20 +279,6 @@ export function EnvDiffPreview({ workspaces }: EnvDiffPreviewProps) {
         })}
       </div>
 
-      {/* Footer Summary */}
-      <div className="flex items-center justify-between border-t border-white/[0.03] px-5 py-3 bg-zinc-950/20">
-        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-text-muted">
-          {multiEnvProjects.length} project{multiEnvProjects.length !== 1 ? "s" : ""} with drift
-          check available
-        </span>
-        <Link
-          href="/dashboard/projects"
-          className="inline-flex items-center gap-1 text-[10px] font-mono font-medium text-primary transition-colors hover:text-primary/80"
-        >
-          View all
-          <ArrowRight className="size-2.5" />
-        </Link>
-      </div>
     </CyberPanel>
   );
 }

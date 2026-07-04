@@ -65,7 +65,7 @@ function CyberPanel({
 
 function SkeletonLoader() {
   return (
-    <CyberPanel title="WORKSPACE COMPARISON" subtitle="Side-by-side overview">
+    <CyberPanel title="Workspace Comparison" subtitle="Side-by-side overview">
       <div className="divide-y divide-white/[0.03]">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-5 py-4 animate-pulse">
@@ -85,7 +85,7 @@ function SkeletonLoader() {
 
 function EmptyState() {
   return (
-    <CyberPanel title="WORKSPACE COMPARISON" subtitle="Side-by-side overview">
+    <CyberPanel title="Workspace Comparison" subtitle="Side-by-side overview">
       <div className="px-5 py-16 text-center">
         <div className="mx-auto flex size-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
           <FolderKanban className="size-6 text-primary" />
@@ -127,7 +127,7 @@ export function WorkspaceComparison({
   }
 
   return (
-    <CyberPanel title="WORKSPACE COMPARISON" subtitle="Side-by-side overview">
+    <CyberPanel title="Workspace Comparison" subtitle="Side-by-side overview">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>

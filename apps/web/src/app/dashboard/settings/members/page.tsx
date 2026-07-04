@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +18,8 @@ import {
   Shield,
   Plus,
   Trash2,
+  User,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
@@ -296,7 +299,7 @@ export default function SettingsMembersPage() {
           Settings
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Manage your account, workspace, and billing preferences.
+          Manage your account, workspace, and security preferences.
         </p>
       </motion.div>
 
@@ -305,20 +308,34 @@ export default function SettingsMembersPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.05 }}
-        className="flex gap-2 border-b border-white/5 pb-2 mb-6"
+        className="flex gap-1 border-b border-white/5 pb-0"
       >
         <Link
           href="/dashboard/settings"
-          className="rounded-lg border border-white/5 text-muted-foreground px-4 py-2 text-xs font-medium transition-colors hover:text-foreground hover:border-white/10"
+          className="flex items-center gap-1.5 rounded-t-lg border border-b-0 border-white/5 text-muted-foreground px-4 py-2.5 text-xs font-medium transition-colors hover:text-foreground hover:border-white/10"
         >
-          <Settings className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
-          General
+          <User className="h-3.5 w-3.5" />
+          Profile
+        </Link>
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-1.5 rounded-t-lg border border-b-0 border-white/5 text-muted-foreground px-4 py-2.5 text-xs font-medium transition-colors hover:text-foreground hover:border-white/10"
+        >
+          <Building2 className="h-3.5 w-3.5" />
+          Workspace
+        </Link>
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-1.5 rounded-t-lg border border-b-0 border-white/5 text-muted-foreground px-4 py-2.5 text-xs font-medium transition-colors hover:text-foreground hover:border-white/10"
+        >
+          <Shield className="h-3.5 w-3.5" />
+          Security
         </Link>
         <Link
           href="/dashboard/settings/members"
-          className="rounded-lg border bg-primary/10 text-primary border-primary/30 px-4 py-2 text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 rounded-t-lg border border-b-0 bg-primary/10 text-primary border-primary/30 px-4 py-2.5 text-xs font-medium transition-colors"
         >
-          <Users className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
+          <Users className="h-3.5 w-3.5" />
           Members
         </Link>
       </motion.div>
