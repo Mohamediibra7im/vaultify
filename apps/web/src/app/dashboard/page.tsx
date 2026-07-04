@@ -7,11 +7,7 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Plus, Flame } from "lucide-react";
 
-import { WorkspaceCards } from "./components/workspace-cards";
-import { QuickActions } from "./components/quick-actions";
-import { OnboardingChecklist } from "./components/onboarding-checklist";
 import { SecretHealth } from "./components/secret-health";
-import { MemberActivity } from "./components/member-activity";
 import { WorkspaceComparison } from "./components/workspace-comparison";
 import { ApiTokenUsage } from "./components/api-token-usage";
 import { EnvDiffPreview } from "./components/env-diff-preview";
@@ -385,19 +381,9 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* ── Quick Actions + Onboarding ────────────── */}
-      <section className="grid gap-6 lg:grid-cols-2">
-        <QuickActions />
-        <OnboardingChecklist
-          workspaceCount={stats.workspaces}
-          memberCount={stats.members}
-          projectCount={stats.projects}
-        />
-      </section>
-
-      {/* ── Workspace Overview Cards ──────────────── */}
+      {/* ── Workspace Comparison ──────────────────── */}
       <section>
-        <WorkspaceCards workspaces={workspaces} loading={loading} />
+        <WorkspaceComparison workspaces={workspaces} loading={loading} />
       </section>
 
       {/* ── Activity Timeline + Secret Health ─────── */}
@@ -417,12 +403,6 @@ export default function DashboardPage() {
           <MultiphaseTimeline activity={activity} loading={loading} />
         </CyberPanel>
         <SecretHealth workspaces={workspaces} />
-      </section>
-
-      {/* ── Member Activity + Workspace Comparison ── */}
-      <section className="grid gap-6 lg:grid-cols-2">
-        <MemberActivity workspaces={workspaces} />
-        <WorkspaceComparison workspaces={workspaces} loading={loading} />
       </section>
 
       {/* ── API Tokens + Environment Drift ────────── */}
