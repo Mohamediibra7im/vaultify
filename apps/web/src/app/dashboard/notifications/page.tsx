@@ -216,19 +216,13 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        {/* Telemetry widget strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-white/[0.03] font-mono text-[10px] text-text-muted">
-          <div>
-            NODE INTEGRITY: <span className="text-primary font-bold">100% SECURE</span>
-          </div>
+        {/* Real telemetry widget */}
+        <div className="grid grid-cols-2 gap-3 mt-6 pt-5 border-t border-white/[0.03] font-mono text-[10px] text-text-muted">
           <div>
             UNACKNOWLEDGED: <span className="text-text-primary font-semibold">{unreadCount}</span>
           </div>
           <div>
             CRITICAL SEC: <span className={cn(securityUnread > 0 ? "text-amber-400 font-bold" : "text-text-muted")}>{securityUnread} ACTIVE</span>
-          </div>
-          <div>
-            STREAM LOG RATE: <span className="text-text-secondary">1.2 EVENTS/SEC</span>
           </div>
         </div>
       </section>
@@ -360,29 +354,22 @@ export default function NotificationsPage() {
                     )}
                   </div>
 
-                  {/* Collapsible raw JSON log parameters */}
+                  {/* Collapsible notification details */}
                   {isExpanded && (
                     <div className="border-t border-white/[0.03] bg-zinc-950/80 p-4 font-mono text-[9px] text-zinc-400 space-y-2 animate-fade-in">
                       <div className="flex items-center justify-between text-[8px] text-text-muted border-b border-white/[0.03] pb-1.5 mb-2">
-                        <span>JSON METADATA INGRESS PAYLOAD</span>
-                        <span>NODE ID: {n.id}</span>
+                        <span>NOTIFICATION DETAILS</span>
+                        <span>ID: {n.id}</span>
                       </div>
                       <pre className="overflow-x-auto text-left leading-normal text-primary/80">
                         {JSON.stringify(
                           {
-                            logSchema: "v1.2.9-sha",
-                            eventPayload: {
-                              id: n.id,
-                              mutation: n.type,
-                              title: n.title,
-                              message: n.message,
-                              decryptionAudit: {
-                                status: "VERIFIED",
-                                algoSpec: "AES-256-GCM",
-                                saltEntropy: "98.9%",
-                              },
-                              nodeOrigin: "us-east-1a",
-                            },
+                            id: n.id,
+                            type: n.type,
+                            title: n.title,
+                            message: n.message,
+                            read: n.read,
+                            createdAt: n.createdAt,
                           },
                           null,
                           2

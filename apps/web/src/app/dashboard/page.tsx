@@ -5,15 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import {
-  ArrowRight,
-  Plus,
-  ScrollText,
-  Search,
-  RefreshCw,
-  Key,
-  Flame,
-} from "lucide-react";
+import { ArrowRight, Plus, Flame } from "lucide-react";
 
 interface Workspace {
   id: string;
@@ -91,26 +83,7 @@ const toneGlow: Record<ActionTone, string> = {
   neutral: "border-white/10 text-text-muted bg-white/[0.02]",
 };
 
-const quickLinks = [
-  {
-    href: "/dashboard/workspaces/new",
-    icon: Plus,
-    label: "Create workspace",
-    description: "Create new workspaces for your teams",
-  },
-  {
-    href: "/dashboard/secrets/search",
-    icon: Search,
-    label: "Retrieve secrets",
-    description: "Access and search environment variables",
-  },
-  {
-    href: "/dashboard/audit",
-    icon: ScrollText,
-    label: "Compliance reports",
-    description: "View activity logs and access history",
-  },
-];
+// ponytail: removed quickLinks — redundant with sidebar nav
 
 /* ── Premium Cyber Glass Panel with Grid Overlay ──────────────── */
 
@@ -164,214 +137,35 @@ function CyberPanel({
 function MetricDial({
   label,
   value,
-  percentage = 70,
   detail,
   loading,
 }: {
   label: string;
   value: number | string;
-  percentage?: number;
   detail: string;
   loading: boolean;
 }) {
-  const circumference = 2 * Math.PI * 18;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
+  // ponytail: removed fake percentage dials — real numbers only
   return (
     <CyberPanel className="group transition-all duration-200 hover:scale-[1.01]">
-      <div className="p-5 flex items-center justify-between">
-        <div className="space-y-2.5">
-          <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-text-muted block">
-            {label}
-          </span>
-          {loading ? (
-            <div className="h-9 w-12 animate-pulse rounded-lg bg-white/[0.04]" />
-          ) : (
-            <div className="text-3xl font-bold tracking-tight text-foreground font-mono">
-              {value}
-            </div>
-          )}
-          <p className="text-[10px] font-mono text-text-muted">{detail}</p>
-        </div>
-
-        {/* Circular Telemetry Dial */}
-        <div className="relative size-14 shrink-0 flex items-center justify-center">
-          <svg className="size-full rotate-[-90deg]">
-            <circle
-              cx="28"
-              cy="28"
-              r="18"
-              className="stroke-white/[0.03] fill-none"
-              strokeWidth="3.5"
-            />
-            <circle
-              cx="28"
-              cy="28"
-              r="18"
-              className="stroke-primary fill-none transition-all duration-1000 ease-out"
-              strokeWidth="3.5"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className="absolute text-[8px] font-mono text-primary font-bold">{percentage}%</span>
-        </div>
+      <div className="p-5">
+        <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-text-muted block">
+          {label}
+        </span>
+        {loading ? (
+          <div className="h-9 w-12 animate-pulse rounded-lg bg-white/[0.04] mt-2" />
+        ) : (
+          <div className="text-3xl font-bold tracking-tight text-foreground font-mono mt-2">
+            {value}
+          </div>
+        )}
+        <p className="text-[10px] font-mono text-text-muted mt-2">{detail}</p>
       </div>
     </CyberPanel>
   );
 }
 
-/* ── Interactive Quantum Key Ring Rotation Panel ────────────── */
-
-function QuantumKeyRotation() {
-  const [rotationActive, setRotationActive] = useState(false);
-  const [keyParams, setKeyParams] = useState({
-    iv: "0xf492e...da18",
-    salt: "0x82a9...19bf",
-    entropy: "98.2%",
-  });
-
-  const triggerRotation = () => {
-    setRotationActive(true);
-    
-    // Simulate encryption key generation step values
-    const hex = "0123456789abcdef";
-    let randomIv = "0x";
-    for (let i = 0; i < 7; i++) randomIv += hex[Math.floor(Math.random() * 16)];
-    randomIv += "...";
-    for (let i = 0; i < 4; i++) randomIv += hex[Math.floor(Math.random() * 16)];
-
-    let randomSalt = "0x";
-    for (let i = 0; i < 4; i++) randomSalt += hex[Math.floor(Math.random() * 16)];
-    randomSalt += "...";
-    for (let i = 0; i < 4; i++) randomSalt += hex[Math.floor(Math.random() * 16)];
-
-    const randomEntropy = (95 + Math.random() * 5).toFixed(1) + "%";
-
-    setTimeout(() => {
-      setKeyParams({
-        iv: randomIv,
-        salt: randomSalt,
-        entropy: randomEntropy,
-      });
-      setRotationActive(false);
-    }, 1500);
-  };
-
-  return (
-    <div className="flex flex-col md:flex-row items-center gap-6 p-6">
-      {/* Concentric Rotating Cyber rings */}
-      <div className="relative size-32 flex items-center justify-center shrink-0">
-        <div className={cn(
-          "absolute inset-0 rounded-full border border-dashed border-primary/20",
-          rotationActive ? "animate-[spin_4s_linear_infinite]" : "animate-[spin_20s_linear_infinite]"
-        )} />
-        <div className={cn(
-          "absolute inset-3 rounded-full border border-primary/40 border-r-transparent border-l-transparent",
-          rotationActive ? "animate-[spin_2s_linear_infinite_reverse]" : "animate-[spin_10s_linear_infinite_reverse]"
-        )} />
-        <div className="absolute inset-6 rounded-full border border-white/5 bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.05)]">
-          <Key className="size-6 text-primary" />
-        </div>
-      </div>
-
-      <div className="flex-1 w-full text-left space-y-4 font-mono text-[11px]">
-        <div className="grid grid-cols-2 gap-2 border-b border-white/[0.03] pb-3 text-zinc-400">
-          <div>
-            <span className="text-[8px] uppercase tracking-wider text-text-muted block">Initialization Vector</span>
-            <span className="text-text-primary font-bold">{keyParams.iv}</span>
-          </div>
-          <div>
-            <span className="text-[8px] uppercase tracking-wider text-text-muted block">Salting Key</span>
-            <span className="text-text-primary font-bold">{keyParams.salt}</span>
-          </div>
-          <div>
-            <span className="text-[8px] uppercase tracking-wider text-text-muted block">Encryption Standard</span>
-            <span className="text-primary font-bold">PBKDF2-SHA256</span>
-          </div>
-          <div>
-            <span className="text-[8px] uppercase tracking-wider text-text-muted block">Key Entropy</span>
-            <span className="text-emerald-400 font-bold">{keyParams.entropy}</span>
-          </div>
-        </div>
-
-        <button
-          onClick={triggerRotation}
-          disabled={rotationActive}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/10 border border-primary/25 hover:bg-primary/20 text-primary py-2 px-4 font-bold text-[11px] uppercase tracking-wider font-mono transition-all disabled:opacity-50"
-        >
-          <RefreshCw className={cn("size-3.5", rotationActive && "animate-spin")} />
-          {rotationActive ? "ROTATING KEY..." : "ROTATE ENCRYPTION KEY"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ── Live Ingress Terminal Simulator with Tabs ────────────────── */
-
-function TabbedCommandCenter() {
-  const [activeTab, setActiveTab] = useState<"handshake" | "ingress" | "variables">("handshake");
-  
-  const simulationData = {
-    handshake: [
-      { text: "$ vaultify sync --local", type: "cmd" },
-      { text: ">> Connection handshake started client-side", type: "log" },
-      { text: ">> Decrypting master encryption key...", type: "log" },
-      { text: ">> [ok] handshake complete: status 200", type: "ok" },
-      { text: ">> Connected to secure storage server", type: "log" },
-    ],
-    ingress: [
-      { text: "$ vaultify status --connections", type: "cmd" },
-      { text: ">> Trace path: central -> aws parameter-store", type: "log" },
-      { text: ">> Trace path: central -> vercel-edge API", type: "log" },
-      { text: ">> [ok] 2 integration tunnels verified & secure", type: "ok" },
-    ],
-    variables: [
-      { text: "$ vaultify list --decrypt", type: "cmd" },
-      { text: ">> DATABASE_URL = ************ (AES decrypted)", type: "log" },
-      { text: ">> STRIPE_SECRET = ************ (AES decrypted)", type: "log" },
-      { text: ">> [ok] Listed 8 environment values", type: "ok" },
-    ],
-  };
-
-  return (
-    <div className="p-5 font-mono text-[10px] text-zinc-300 text-left">
-      <div className="flex items-center gap-1.5 border-b border-white/[0.04] pb-2 mb-3">
-        {(["handshake", "ingress", "variables"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              "px-2.5 py-1 rounded text-[9px] font-bold uppercase transition-all",
-              activeTab === tab
-                ? "bg-primary/10 border border-primary/20 text-primary"
-                : "border border-transparent text-text-muted hover:text-text-secondary"
-            )}
-          >
-            {tab === "handshake" ? "Auth Handshake" : tab === "ingress" ? "Active Syncs" : "Environment Vars"}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-zinc-950/80 rounded-lg p-3.5 border border-white/5 h-[160px] overflow-y-auto space-y-1">
-        {simulationData[activeTab].map((line, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              line.type === "cmd" && "text-primary font-semibold",
-              line.type === "ok" && "text-emerald-400 font-bold",
-              line.type === "log" && "text-zinc-500"
-            )}
-          >
-            {line.text}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+// ponytail: removed QuantumKeyRotation and TabbedCommandCenter — fake demos, no API backing
 
 /* ── Symmetrical Multiphase Decryption Log Timeline ───────────── */
 
@@ -570,38 +364,25 @@ export default function DashboardPage() {
         <MetricDial
           label="Secure Workspaces"
           value={stats.workspaces}
-          percentage={92}
           detail="Isolated workspace contexts for your teams"
           loading={loading}
         />
         <MetricDial
           label="Linked Projects"
           value={stats.projects}
-          percentage={84}
           detail="Connected repositories and platforms"
           loading={loading}
         />
         <MetricDial
           label="Workspace Members"
           value={stats.members}
-          percentage={100}
           detail="Users with access to organization secrets"
           loading={loading}
         />
       </section>
 
-      {/* ── Interactive Rotation & Timeline log deck ── */}
-      <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          <CyberPanel title="Encryption Key Rotation" subtitle="Active security parameters">
-            <QuantumKeyRotation />
-          </CyberPanel>
-
-          <CyberPanel title="System Console" subtitle="Recent sync commands">
-            <TabbedCommandCenter />
-          </CyberPanel>
-        </div>
-
+      {/* ── Stats + Audit log deck ── */}
+      <section className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <CyberPanel
             title="Security Audit Log"
@@ -616,33 +397,6 @@ export default function DashboardPage() {
             }
           >
             <MultiphaseTimeline activity={activity} loading={loading} />
-          </CyberPanel>
-
-          <CyberPanel title="Quick Navigation" subtitle="Platform shortcuts">
-            <div className="p-4 grid gap-2.5">
-              {quickLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="group flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-3 transition-all duration-200 hover:border-primary/25 hover:bg-primary/5"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-all duration-200 group-hover:bg-primary/20">
-                      <Plus className="size-4" />
-                    </div>
-                    <div className="min-w-0 text-left">
-                      <p className="text-[12px] font-mono font-bold text-text-primary uppercase tracking-wide">
-                        {link.label}
-                      </p>
-                      <p className="text-[10px] font-mono text-text-muted truncate mt-0.5">
-                        {link.description}
-                      </p>
-                    </div>
-                  </div>
-                  <ArrowRight className="size-4 text-text-muted transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
-                </Link>
-              ))}
-            </div>
           </CyberPanel>
         </div>
       </section>
