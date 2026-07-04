@@ -13,6 +13,7 @@ npm install -g @vaultiify/cli
 | Command | Description |
 |---------|-------------|
 | `vaultify login <api-url>` | Authenticate with email/password, save session |
+| `vaultify login <api-url> --token <token>` | Save an API token directly (for GitHub OAuth users) |
 | `vaultify logout` | Clear saved session and API URL |
 | `vaultify whoami` | Show current authenticated user |
 | `vaultify pull <workspace> <env>` | Export secrets as `.env` file |

@@ -185,16 +185,26 @@ program
 program
   .command('login')
   .description('Authenticate with Vaultify API')
-  .argument('<api-url>', 'Vaultify API base URL (e.g. http://localhost:4000/api)')
+  .argument('<api-url>', 'Vaultify API base URL (e.g. https://vaultify-api.vercel.app/api)')
+  .option('--token <token>', 'Save an API token directly (for GitHub OAuth users)')
   .addHelpText(
     'after',
     `
 Prompts for email and password, then saves your session token to ~/.vaultify/config.json.
+With --token, saves an API token directly (create one from the dashboard Settings → API Tokens).
 You can also set VAULTIFY_TOKEN and VAULTIFY_API_URL env vars instead.
 `,
   )
-  .action(async (apiUrl: string) => {
+  .action(async (apiUrl: string, opts: { token?: string }) => {
     try {
+      config.setApiUrl(apiUrl);
+
+      if (opts.token) {
+        config.setToken(opts.token);
+        console.log(chalk.green('✓ Token saved for'), chalk.bold(apiUrl));
+        return;
+      }
+
       const email = await promptInput(chalk.dim('Email: '));
       const password = await promptPassword(chalk.dim('Password: '));
 
@@ -206,7 +216,6 @@ You can also set VAULTIFY_TOKEN and VAULTIFY_API_URL env vars instead.
       });
 
       config.setToken(data.token);
-      config.setApiUrl(apiUrl);
 
       console.log(chalk.green('✓ Logged in as'), chalk.bold(data.user.email));
     } catch (err: unknown) {
