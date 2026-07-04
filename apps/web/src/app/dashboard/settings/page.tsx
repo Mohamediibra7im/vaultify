@@ -35,6 +35,7 @@ interface ApiToken {
   id: string;
   name: string;
   token?: string;
+  rawToken?: string;
   createdAt: string;
 }
 
@@ -156,7 +157,7 @@ export default function SettingsGeneralPage() {
         token
       );
       setTokens((prev) => [...prev, res]);
-      if (res.token) setCreatedTokenVal(res.token);
+      if (res.rawToken) setCreatedTokenVal(res.rawToken);
       setNewTokenName("");
       toast.success("API access token generated");
     } catch (err) {
