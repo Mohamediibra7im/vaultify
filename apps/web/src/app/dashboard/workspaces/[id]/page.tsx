@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { api } from "@/lib/api";
-import { getSocket, useWorkspaceSubscription } from "@/lib/websocket";
+// ponytail: no websocket server on Vercel, dead code removed
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -126,7 +126,7 @@ export default function WorkspaceDetailPage({
     params.then((p) => setWorkspaceId(p.id));
   }, [params]);
 
-  useWorkspaceSubscription(workspaceId ?? undefined);
+  // ponytail: no websocket server on Vercel — manual refresh via navigation
 
   useEffect(() => {
     if (!token || !workspaceId) return;
@@ -139,29 +139,6 @@ export default function WorkspaceDetailPage({
         router.push("/dashboard/workspaces");
       })
       .finally(() => setLoading(false));
-
-    const socket = getSocket();
-    if (socket) {
-      const refresh = () => {
-        api.get<WorkspaceDetail>(`/workspaces/${workspaceId}`, token)
-          .then(setWs)
-          .catch((err) => toast.error(err instanceof Error ? err.message : "Failed to refresh workspace"));
-      };
-      socket.on('workspace:changed', refresh);
-      socket.on('project:changed', refresh);
-      socket.on('project:deleted', refresh);
-      socket.on('member:changed', refresh);
-      socket.on('member:removed', refresh);
-      socket.on('audit:new', refresh);
-      return () => {
-        socket.off('workspace:changed', refresh);
-        socket.off('project:changed', refresh);
-        socket.off('project:deleted', refresh);
-        socket.off('member:changed', refresh);
-        socket.off('member:removed', refresh);
-        socket.off('audit:new', refresh);
-      };
-    }
   }, [token, workspaceId, router]);
 
   const fetchInviteLinks = useCallback(async () => {

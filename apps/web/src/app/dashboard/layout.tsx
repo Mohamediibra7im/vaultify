@@ -3,7 +3,6 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { WebSocketProvider } from "@/components/websocket-provider";
 import { DashboardSidebarShell } from "@/components/dashboard/sidebar";
 
 export default function DashboardLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -45,11 +44,9 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
           </a>
           
           <main id="main-content" className="relative flex-1">
-            <WebSocketProvider>
-              <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
-                {children}
-              </div>
-            </WebSocketProvider>
+            <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
+              {children}
+            </div>
           </main>
         </div>
       </div>
