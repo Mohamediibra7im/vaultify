@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "audit logs",
     "team secrets"
   ],
-  authors: [{ name: "Vaultify Engineering" }],
+  authors: [{ name: "Mohamed Ibrahim" }],
   openGraph: {
     type: "website",
     locale: "en_US",
