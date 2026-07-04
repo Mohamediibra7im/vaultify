@@ -379,7 +379,39 @@ export class SecretService {
           },
         });
         if (existing) {
-          results.skipped++;
+          // ponytail: decrypt existing, compare, skip if same value
+          const oldDecrypted = this.encryption.decrypt(
+            existing.valueEncrypted, existing.iv, existing.tag, rawKey,
+          );
+          if (oldDecrypted === entry.value) {
+            results.skipped++;
+            continue;
+          }
+          // value changed — save history, re-encrypt, update
+          await this.saveHistory(
+            existing.id, existing.key, existing.valueEncrypted,
+            existing.iv, existing.tag, existing.version ?? 1, userId, workspaceKeyId,
+          );
+          const { ciphertext, iv, tag } = this.encryption.encrypt(entry.value, rawKey);
+          await this.prisma.secret.update({
+            where: { id: existing.id },
+            data: {
+              valueEncrypted: ciphertext,
+              iv,
+              tag,
+              version: { increment: 1 },
+              updatedById: userId,
+            },
+          });
+          await this.notification.notifySecretChanged({
+            workspaceId: env.project.workspaceId,
+            environmentId: env.id,
+            environmentName: env.name,
+            secretKey: entry.key,
+            action: 'updated',
+            actorId: userId,
+          });
+          results.imported++;
           continue;
         }
         const { ciphertext, iv, tag } = this.encryption.encrypt(entry.value, rawKey);
