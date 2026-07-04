@@ -10,6 +10,7 @@
     "lint": "echo skipping lint — no eslint config yet",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:prod": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "test": "prisma generate && jest",
     "test:watch": "jest --watch"
