@@ -201,12 +201,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Short version: fork, branch (`feat/` /
 
 ---
 
-## License
-
-MIT. See [LICENSE](LICENSE).
-
----
-
 <p align="center">
   Made with ❤️ by <a href="https://mohamediibrahim.dev">Mohamed Ibrahim</a>
 </p>
