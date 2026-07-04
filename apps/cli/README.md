@@ -12,20 +12,22 @@ npm install -g @vaultiify/cli
 
 | Command | Description |
 |---------|-------------|
-| `vaultify login` | Interactive login — choose email/password or API token |
-| `vaultify login --token <token>` | Save an API token directly |
-| `vaultify logout` | Clear saved credentials |
+| `vaultify login [api-url]` | Authenticate (email/password or API token). Default URL: `https://vaultify-api.vercel.app/api` |
+| `vaultify login --token <token>` | Save an API token directly (for CI/CD) |
 | `vaultify whoami` | Show current user info |
-| `vaultify ls [workspace] [environment]` | List workspaces, projects, environments, or secrets |
-| `vaultify pull <workspace> <environment>` | Export secrets as `.env` file |
-| `vaultify push <workspace> <environment> [file]` | Import `.env` file into an environment |
-| `vaultify diff <workspace> <env1> <env2>` | Compare two environments |
+| `vaultify logout` | Clear saved session |
+| `vaultify pull <workspace> <env> [-o file] [--resolve]` | Export secrets as `.env` file |
+| `vaultify push <workspace> <env> [file]` | Import `.env` file into environment (default: `.env`) |
+| `vaultify ls` | List workspaces |
+| `vaultify ls <workspace>` | List projects in workspace |
+| `vaultify ls <workspace> <env>` | List secrets in environment |
+| `vaultify diff <workspace> <env1> <env2> [--values]` | Compare secrets between environments |
 | `vaultify members <workspace>` | List workspace members |
-| `vaultify token create <workspace> <name>` | Create an API token |
+| `vaultify token create <workspace> <name>` | Create API token (shown once) |
 | `vaultify token ls <workspace>` | List API tokens |
-| `vaultify token revoke <workspace> <token-id>` | Revoke an API token |
+| `vaultify token revoke <workspace> <token-id>` | Revoke API token |
 | `vaultify secrets search <workspace> <query>` | Search secrets by key name |
-| `vaultify secrets reveal <secret-id>` | Reveal a secret's decrypted value |
+| `vaultify secrets reveal <secret-id>` | Reveal a secret value |
 
 ## Usage
 
@@ -40,6 +42,12 @@ vaultify login https://my-api.com/api
 
 # Save a token directly (for CI/CD)
 vaultify login --token your-api-token-here
+
+# Check who you are
+vaultify whoami
+
+# Log out
+vaultify logout
 ```
 
 The interactive login shows:
@@ -62,6 +70,7 @@ vaultify ls my-team production
 # Pull secrets to .env file
 vaultify pull my-team production
 vaultify pull my-team staging -o .env.staging
+vaultify pull my-team dev --resolve
 
 # Push .env file to environment
 vaultify push my-team production .env

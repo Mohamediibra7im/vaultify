@@ -145,16 +145,28 @@ async function resolveWorkspaceSlug(api: VaultifyApi, slug: string): Promise<Wor
   return ws;
 }
 
-/** Get first project in a workspace (or throw). */
-async function getFirstProject(api: VaultifyApi, workspaceId: string): Promise<ProjectDto> {
+// ponytail: Resolve a single project from a workspace.
+// If projectName is provided, match by name (case-insensitive).
+// If omitted and exactly 1 project exists, use it.
+// If omitted and multiple projects exist, throw with guidance.
+async function resolveProject(api: VaultifyApi, workspaceId: string, projectName?: string): Promise<ProjectDto> {
   const projects = await api.get<ProjectDto[]>(`/workspaces/${workspaceId}/projects`);
   if (projects.length === 0) {
     throw new Error(`No projects found in workspace ${workspaceId}`);
   }
-  if (projects.length > 1) {
-    console.warn(chalk.yellow(`⚠  Multiple projects found, using first: "${projects[0].name}"`));
+  if (projectName) {
+    const match = projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase());
+    if (!match) {
+      throw new Error(`Project "${projectName}" not found. Available: ${projects.map((p) => p.name).join(', ')}`);
+    }
+    return match;
   }
-  return projects[0];
+  if (projects.length === 1) {
+    return projects[0];
+  }
+  throw new Error(
+    `Workspace has ${projects.length} projects — use --project <name>. Available: ${projects.map((p) => p.name).join(', ')}`,
+  );
 }
 
 /** Resolve environment name to ID within a project. */
@@ -329,22 +341,26 @@ program
   .description('Export secrets from an environment as .env file')
   .argument('<workspace-slug>', 'Workspace slug (e.g. "my-team")')
   .argument('<environment>', 'Environment name (e.g. "development")')
+  // ponytail: --project option for multi-project workspaces
+  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
   .option('-o, --output <file>', 'Output file path (default: <environment>.env)', undefined)
   .option('--resolve', 'Resolve secret references ({{ env.KEY }})')
   .addHelpText(
     'after',
     `
 Examples:
-  vaultify pull my-team production          → writes production.env
-  vaultify pull my-team staging -o .env      → writes .env
-  vaultify pull my-team dev --resolve        → resolve references
+  vaultify pull my-team production                   → writes production.env
+  vaultify pull my-team staging -o .env               → writes .env
+  vaultify pull my-team dev --resolve                 → resolve references
+  vaultify pull my-team production -p my-api          → select project by name
 `,
   )
-  .action(async (workspaceSlug: string, environment: string, opts: { output?: string; resolve?: boolean }) => {
+  .action(async (workspaceSlug: string, environment: string, opts: { project?: string; output?: string; resolve?: boolean }) => {
     try {
       const { api } = getApi();
       const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const project = await getFirstProject(api, ws.id);
+      // ponytail: use resolveProject with optional --project name
+      const project = await resolveProject(api, ws.id, opts.project);
       const envId = await resolveEnvironmentId(api, project.id, environment);
 
       const qs = opts.resolve ? '?resolve=true' : '';
@@ -367,19 +383,23 @@ program
   .argument('<workspace-slug>', 'Workspace slug (e.g. "my-team")')
   .argument('<environment>', 'Environment name (e.g. "development")')
   .argument('[file]', 'Path to .env file (default: .env)', '.env')
+  // ponytail: --project option for multi-project workspaces
+  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
   .addHelpText(
     'after',
     `
 Examples:
-  vaultify push my-team production          → reads .env, imports to production
-  vaultify push my-team staging .env.prod    → reads .env.prod
+  vaultify push my-team production                   → reads .env, imports to production
+  vaultify push my-team staging .env.prod             → reads .env.prod
+  vaultify push my-team production -p my-api          → select project by name
 `,
   )
-  .action(async (workspaceSlug: string, environment: string, file: string) => {
+  .action(async (workspaceSlug: string, environment: string, file: string, opts: { project?: string }) => {
     try {
       const { api } = getApi();
       const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const project = await getFirstProject(api, ws.id);
+      // ponytail: use resolveProject with optional --project name
+      const project = await resolveProject(api, ws.id, opts.project);
       const envId = await resolveEnvironmentId(api, project.id, environment);
 
       const fileContent = readFileSync(file, 'utf-8');
@@ -402,16 +422,19 @@ program
   .description('List workspaces, projects, or environments')
   .argument('[slug]', 'Workspace slug to list projects under')
   .argument('[environment]', 'Environment name to list secrets under (requires slug)')
+  // ponytail: --project option for multi-project workspaces
+  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
   .addHelpText(
     'after',
     `
 Examples:
-  vaultify ls                          → list workspaces
-  vaultify ls my-team                  → list projects in workspace
-  vaultify ls my-team production       → list secrets in environment
+  vaultify ls                                 → list workspaces
+  vaultify ls my-team                         → list projects in workspace
+  vaultify ls my-team production              → list secrets in environment
+  vaultify ls my-team production -p my-api    → select project by name
 `,
   )
-  .action(async (slug?: string, environment?: string) => {
+  .action(async (slug?: string, environment?: string, opts?: { project?: string }) => {
     try {
       const { api } = getApi();
 
@@ -446,7 +469,8 @@ Examples:
         return;
       }
 
-      const project = await getFirstProject(api, ws.id);
+      // ponytail: use resolveProject with optional --project name
+      const project = await resolveProject(api, ws.id, opts?.project);
       const envId = await resolveEnvironmentId(api, project.id, environment);
       const secrets = await api.get<Array<{ id: string; key: string; version: number }>>(`/environments/${envId}/secrets`);
       if (secrets.length === 0) {
@@ -559,6 +583,8 @@ program
   .argument('<workspace-slug>', 'Workspace slug')
   .argument('<env1>', 'First environment name')
   .argument('<env2>', 'Second environment name')
+  // ponytail: --project option for multi-project workspaces
+  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
   .option('--values', 'Include decrypted values (requires EDITOR+ role)')
   .addHelpText(
     'after',
@@ -566,13 +592,15 @@ program
 Examples:
   vaultify diff my-team staging production
   vaultify diff my-team dev staging --values
+  vaultify diff my-team staging production -p my-api
 `,
   )
-  .action(async (workspaceSlug: string, env1: string, env2: string, opts: { values?: boolean }) => {
+  .action(async (workspaceSlug: string, env1: string, env2: string, opts: { project?: string; values?: boolean }) => {
     try {
       const { api } = getApi();
       const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const project = await getFirstProject(api, ws.id);
+      // ponytail: use resolveProject with optional --project name
+      const project = await resolveProject(api, ws.id, opts.project);
       const env1Id = await resolveEnvironmentId(api, project.id, env1);
       const env2Id = await resolveEnvironmentId(api, project.id, env2);
 
