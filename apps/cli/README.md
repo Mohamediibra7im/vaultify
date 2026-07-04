@@ -1,11 +1,11 @@
-# @vaultiify/cli
+# @vaultify/cli
 
 **Vaultify CLI** — manage secrets from your terminal.
 
 ## Install
 
 ```bash
-npm install -g @vaultiify/cli
+npm install -g @vaultify/cli
 ```
 
 ## Commands

@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js" />
   <img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs" alt="NestJS" />
   <img src="https://img.shields.io/badge/Prisma-7-2D3748?style=for-the-badge&logo=prisma" alt="Prisma" />
-  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
   <img src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
 </p>
 
@@ -55,7 +55,7 @@ Teams still share secrets through Slack, WhatsApp, and email. That makes values 
 ### Prerequisites
 
 - **Node.js** ≥ 22
-- **pnpm** ≥ 9 — `npm install -g pnpm`
+- **pnpm** ≥ 11 — `npm install -g pnpm`
 - **Docker** — for local Redis
 - **Neon account** — free tier at [neon.tech](https://neon.tech)
 
@@ -157,8 +157,8 @@ User ──owns──→ Workspace ──has──→ Project ──has──→
 <tr><td rowspan="3"><strong>Auth</strong></td><td>Passport.js (JWT strategy)</td><td>—</td></tr>
 <tr><td>GitHub OAuth (passport-github2)</td><td>—</td></tr>
 <tr><td>bcrypt</td><td>6</td></tr>
-<tr><td rowspan="2"><strong>Tooling</strong></td><td>TypeScript (strict)</td><td>5.8</td></tr>
-<tr><td>pnpm workspaces</td><td>9+</td></tr>
+<tr><td rowspan="2"><strong>Tooling</strong></td><td>TypeScript (strict)</td><td>6.0</td></tr>
+<tr><td>pnpm workspaces</td><td>11+</td></tr>
 </table>
 
 ---
@@ -332,6 +332,7 @@ pnpm --filter @vaultify/api prisma:studio
 | `FRONTEND_URL`         |    —     | CORS origin (default: `http://localhost:3000`)        |
 | `GITHUB_CLIENT_ID`     |    —     | GitHub OAuth app client ID                            |
 | `GITHUB_CLIENT_SECRET` |    —     | GitHub OAuth app client secret                        |
+| `CONTACT_EMAIL`        |    —     | Contact form recipient email                          |
 
 ### Design System
 
@@ -378,13 +379,16 @@ Vaultify uses a dark-first vault aesthetic with a premium, operational feel:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+We welcome contributions. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a PR.
 
-1. Fork the repository
-2. Create your feature branch — `git checkout -b feat/amazing-feature`
-3. Commit using [Conventional Commits](https://www.conventionalcommits.org/) — `git commit -m "feat: add amazing feature"`
-4. Push to the branch — `git push origin feat/amazing-feature`
-5. Open a Pull Request
+Quick start:
+
+1. Fork and clone the repo
+2. Install dependencies: `pnpm install`
+3. Start services: `pnpm dev`
+4. Create a branch: `git checkout -b feat/your-feature`
+5. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
+6. Push and open a PR against `main`
 
 ---
 
