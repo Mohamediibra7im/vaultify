@@ -7,6 +7,15 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Plus, Flame } from "lucide-react";
 
+import { WorkspaceCards } from "./components/workspace-cards";
+import { QuickActions } from "./components/quick-actions";
+import { OnboardingChecklist } from "./components/onboarding-checklist";
+import { SecretHealth } from "./components/secret-health";
+import { MemberActivity } from "./components/member-activity";
+import { WorkspaceComparison } from "./components/workspace-comparison";
+import { ApiTokenUsage } from "./components/api-token-usage";
+import { EnvDiffPreview } from "./components/env-diff-preview";
+
 interface Workspace {
   id: string;
   name: string;
@@ -83,8 +92,6 @@ const toneGlow: Record<ActionTone, string> = {
   neutral: "border-white/10 text-text-muted bg-white/[0.02]",
 };
 
-// ponytail: removed quickLinks — redundant with sidebar nav
-
 /* ── Premium Cyber Glass Panel with Grid Overlay ──────────────── */
 
 function CyberPanel({
@@ -145,7 +152,6 @@ function MetricDial({
   detail: string;
   loading: boolean;
 }) {
-  // ponytail: removed fake percentage dials — real numbers only
   return (
     <CyberPanel className="group transition-all duration-200 hover:scale-[1.01]">
       <div className="p-5">
@@ -164,8 +170,6 @@ function MetricDial({
     </CyberPanel>
   );
 }
-
-// ponytail: removed QuantumKeyRotation and TabbedCommandCenter — fake demos, no API backing
 
 /* ── Symmetrical Multiphase Decryption Log Timeline ───────────── */
 
@@ -186,7 +190,7 @@ function MultiphaseTimeline({ activity, loading }: { activity: AuditEntry[]; loa
   if (activity.length === 0) {
     return (
       <div className="px-6 py-12 text-center text-[11px] font-mono text-text-muted uppercase">
-        {/* No secure logs generated on node */}
+        No activity recorded yet
       </div>
     );
   }
@@ -270,12 +274,12 @@ export default function DashboardPage() {
 
         setWorkspaces(workspaceRows);
         
-        // Fetch activity logs for timelines
+        // Fetch activity logs — expanded to 15 entries across workspaces
         const rows: AuditEntry[] = [];
-        for (const workspace of workspaceRows.slice(0, 3)) {
+        for (const workspace of workspaceRows.slice(0, 5)) {
           try {
             const entries = await api.get<AuditEntry[]>(
-              `/workspaces/${workspace.id}/audit-logs?limit=4`,
+              `/workspaces/${workspace.id}/audit-logs?limit=5`,
               token,
             );
             for (const entry of entries) {
@@ -290,7 +294,7 @@ export default function DashboardPage() {
         const sorted = rows.toSorted(
           (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
         );
-        setActivity(sorted.slice(0, 4));
+        setActivity(sorted.slice(0, 15));
       } catch {
         // Fallbacks
       } finally {
@@ -343,7 +347,7 @@ export default function DashboardPage() {
               WELCOME BACK, <span className="bg-gradient-to-r from-primary to-teal-400 bg-clip-text text-transparent"><ScrambledText text={firstName} /></span>
             </h1>
             <p className="text-[12.5px] leading-relaxed text-text-secondary font-mono">
-              {/* Secure session active. Your synced environment configurations and credentials are live and monitoring. */}
+              Secure session active. Your synced environment configurations and credentials are live and monitoring.
             </p>
           </div>
 
@@ -381,24 +385,50 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* ── Stats + Audit log deck ── */}
+      {/* ── Quick Actions + Onboarding ────────────── */}
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
-          <CyberPanel
-            title="Security Audit Log"
-            subtitle="Recent activities"
-            rightElement={
-              <Link
-                href="/dashboard/audit"
-                className="group inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted hover:text-primary transition-colors"
-              >
-                Inspect ALL <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            }
-          >
-            <MultiphaseTimeline activity={activity} loading={loading} />
-          </CyberPanel>
-        </div>
+        <QuickActions />
+        <OnboardingChecklist
+          workspaceCount={stats.workspaces}
+          memberCount={stats.members}
+          projectCount={stats.projects}
+        />
+      </section>
+
+      {/* ── Workspace Overview Cards ──────────────── */}
+      <section>
+        <WorkspaceCards workspaces={workspaces} loading={loading} />
+      </section>
+
+      {/* ── Activity Timeline + Secret Health ─────── */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        <CyberPanel
+          title="Security Audit Log"
+          subtitle="Recent activities"
+          rightElement={
+            <Link
+              href="/dashboard/audit"
+              className="group inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-text-muted hover:text-primary transition-colors"
+            >
+              Inspect ALL <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          }
+        >
+          <MultiphaseTimeline activity={activity} loading={loading} />
+        </CyberPanel>
+        <SecretHealth workspaces={workspaces} />
+      </section>
+
+      {/* ── Member Activity + Workspace Comparison ── */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        <MemberActivity workspaces={workspaces} />
+        <WorkspaceComparison workspaces={workspaces} loading={loading} />
+      </section>
+
+      {/* ── API Tokens + Environment Drift ────────── */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        <ApiTokenUsage workspaces={workspaces} />
+        <EnvDiffPreview workspaces={workspaces} />
       </section>
     </div>
   );
