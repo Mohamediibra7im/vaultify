@@ -81,7 +81,7 @@ export default function SecurityPage() {
             We take external audit contributions and vulnerability reporting very seriously.
           </p>
           <p>
-            If you identify a security flaw or leak vector within the Vaultify platform or CLI client agent, please send reports directly to: <span className="font-mono text-primary select-all">security@vaultify.dev</span>. We will review and remediate critical reports within 48 hours.
+            If you identify a security flaw or leak vector within the Vaultify platform or CLI client agent, please send reports directly to: <a href="mailto:mohamed.iibrahim.omar@gmail.com" className="font-mono text-primary select-all hover:underline">mohamed.iibrahim.omar@gmail.com</a>. We will review and remediate critical reports within 48 hours.
           </p>
         </>
       )

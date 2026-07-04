@@ -14,6 +14,7 @@ import { AuditLogModule } from './audit-log/audit-log.module';
 import { NotificationModule } from './notification/notification.module';
 import { ApiTokenModule } from './api-token/api-token.module';
 import { WorkspaceMemberEnvironmentModule } from './workspace-member-environment/workspace-member-environment.module';
+import { ContactModule } from './contact/contact.module';
 
 import { HealthController } from './health.controller';
 
@@ -31,6 +32,7 @@ import { HealthController } from './health.controller';
     NotificationModule,
     ApiTokenModule,
     WorkspaceMemberEnvironmentModule,
+    ContactModule,
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60000, limit: 20 }],
     }),

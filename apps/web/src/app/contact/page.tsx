@@ -7,7 +7,8 @@ import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Send, CheckCircle2, ShieldAlert, Mail, Terminal } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle2, Mail, Terminal, Globe, ExternalLink } from "lucide-react";
+import { api } from "@/lib/api";
 import Link from "next/link";
 
 export default function ContactPage() {
@@ -17,17 +18,21 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !message) return;
     setIsSubmitting(true);
-    
-    // Simulate API submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setError("");
+
+    try {
+      await api.post("/contact", { name, email, subject, message });
       setSubmitted(true);
-    }, 1500);
+    } catch {
+      setError("Failed to send message. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,7 +58,7 @@ export default function ContactPage() {
         <div className="border-b border-white/5 pb-8 mb-12">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Get in touch</h1>
           <p className="mt-2 text-sm text-muted-foreground font-mono">
-            Have questions about key encapsulation, integrations, or enterprise options? Drop us a message.
+            Questions about Vaultify, integrations, or enterprise options? Drop me a message.
           </p>
         </div>
 
@@ -64,21 +69,31 @@ export default function ContactPage() {
           <div className="md:col-span-2 space-y-6">
             <div className="rounded-xl border border-white/5 bg-zinc-950/20 p-5 space-y-4">
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Developer Support
+                Contact Information
               </h3>
               
               <div className="space-y-3 font-mono text-xs">
-                <div className="flex items-center gap-3 text-muted-foreground">
+                <a 
+                  href="mailto:mohamed.iibrahim.omar@gmail.com" 
+                  className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors group"
+                >
                   <Mail className="h-4 w-4 text-primary" />
-                  <span>support@vaultify.dev</span>
-                </div>
+                  <span>mohamed.iibrahim.omar@gmail.com</span>
+                  <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+                <a 
+                  href="https://mohamediibrahim.dev" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors group"
+                >
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span>mohamediibrahim.dev</span>
+                  <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Terminal className="h-4 w-4 text-primary" />
-                  <span>cli-issues@vaultify.dev</span>
-                </div>
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <ShieldAlert className="h-4 w-4 text-rose-400" />
-                  <span>security@vaultify.dev</span>
+                  <span>CLI &amp; Integration Support</span>
                 </div>
               </div>
             </div>
@@ -86,7 +101,7 @@ export default function ContactPage() {
             <div className="rounded-xl border border-white/5 bg-zinc-950/10 p-5">
               <h4 className="font-mono text-[10px] font-bold uppercase text-zinc-400 mb-2">Response Times</h4>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                We review support messages daily. Active workspace administrators typically receive responses within 4 hours.
+                Messages are reviewed promptly. Expect a response within 24 hours for general inquiries.
               </p>
             </div>
           </div>
@@ -166,6 +181,10 @@ export default function ContactPage() {
                       {isSubmitting ? "Transmitting..." : "Send Message"}
                       <Send className="h-3.5 w-3.5" />
                     </Button>
+
+                    {error && (
+                      <p className="text-xs text-rose-400 font-mono text-center mt-2">{error}</p>
+                    )}
                   </motion.form>
                 ) : (
                   <motion.div 
@@ -180,13 +199,20 @@ export default function ContactPage() {
                     <div className="space-y-2">
                       <h3 className="text-lg font-bold font-mono">Transmission Complete</h3>
                       <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                        Thank you, {name}. Your ticket has been securely logged. A Vaultify support representative will contact you at {email} shortly.
+                        Thank you, {name}. Your message has been sent successfully. I&apos;ll get back to you at {email} shortly.
                       </p>
                     </div>
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={() => setSubmitted(false)}
+                      onClick={() => {
+                        setName("");
+                        setEmail("");
+                        setSubject("");
+                        setMessage("");
+                        setError("");
+                        setSubmitted(false);
+                      }}
                       className="font-mono text-[10px] uppercase tracking-wider rounded-lg mt-4 cursor-pointer"
                     >
                       Send Another Message
