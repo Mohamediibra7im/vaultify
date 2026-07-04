@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Vaultify ZK-Secrets Console",
+    name: "Vaultify",
     short_name: "Vaultify",
-    description: "Developer-first Zero-Knowledge secrets management and configuration synchronization platform.",
+    description: "Zero-knowledge secrets management for teams, projects, environments, and audit-ready access control.",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#090909",

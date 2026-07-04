@@ -1,5 +1,6 @@
 {
   "name": "@vaultify/web",
+  "description": "Vaultify web app for managing encrypted secrets, environments, teams, and operational metadata.",
   "version": "0.1.0",
   "private": true,
   "scripts": {

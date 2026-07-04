@@ -1,5 +1,6 @@
 {
   "name": "vaultify",
+  "description": "Vaultify is a zero-knowledge secrets management platform for teams, projects, environments, and audit-safe secret sync.",
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel -r run dev",

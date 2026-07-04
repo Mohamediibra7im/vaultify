@@ -1,5 +1,6 @@
 {
   "name": "@vaultify/api",
+  "description": "NestJS API for Vaultify, powering workspaces, projects, environments, secrets, audit logs, and notifications.",
   "version": "0.1.0",
   "private": true,
   "scripts": {

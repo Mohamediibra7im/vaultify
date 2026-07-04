@@ -2,27 +2,29 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "Vaultify | ZK-Encryption Secrets Manager",
+    default: "Vaultify | Zero-Knowledge Secrets Manager",
     template: "%s | Vaultify"
   },
-  description: "Secure, developer-first secrets management console. Sync environment variables, audit access telemetry, and manage team scopes with Zero-Knowledge encryption.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://vaultiify.vercel.app"),
+  description: "Vaultify is a zero-knowledge secrets management platform for teams. Organize workspaces, projects, environments, and encrypted secrets with audit-ready access control.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://vaultify.vercel.app"),
   keywords: [
     "secrets manager",
+    "zero knowledge secrets",
+    "workspace secrets",
     "zero knowledge encryption",
     "env variables",
     "dotenv sync",
     "developer console",
-    "security keys",
-    "cryptographic workflow"
+    "audit logs",
+    "team secrets"
   ],
   authors: [{ name: "Vaultify Engineering" }],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://vaultiify.vercel.app",
-    title: "Vaultify | ZK-Encryption Secrets Manager",
-    description: "Secure, developer-first secrets management console. Sync environment variables, audit access telemetry, and manage team scopes.",
+    title: "Vaultify | Zero-Knowledge Secrets Manager",
+    description: "Vaultify helps teams organize and secure secrets across workspaces, projects, and environments with audit-ready access control.",
     siteName: "Vaultify",
     images: [
       {
@@ -35,8 +37,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Vaultify | ZK-Encryption Secrets Manager",
-    description: "Secure, developer-first secrets management console with live telemetry logs.",
+    title: "Vaultify | Zero-Knowledge Secrets Manager",
+    description: "Vaultify secures team secrets across workspaces, projects, environments, and audit logs.",
     images: ["/opengraph-image"],
   },
   robots: {
