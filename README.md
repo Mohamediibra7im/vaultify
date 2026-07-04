@@ -369,7 +369,7 @@ Vaultify uses a dark-first vault aesthetic with a premium, operational feel:
 - [x] Audit logs, API tokens, in-app notifications
 - [x] Real-time WebSocket sync
 - [x] Premium dark-themed dashboard & landing page
-- [ ] CLI tool for CI/CD integration
+- [x] CLI tool for CI/CD integration
 - [ ] Envelope encryption (master key → workspace data key → secrets)
 - [ ] Frontend test suite
 - [ ] Self-hosted Docker deployment guide

@@ -1,6 +1,6 @@
 {
-  "name": "@vaultify/cli",
-  "version": "0.1.0",
+  "name": "@vaultiify/cli",
+  "version": "0.1.1",
   "type": "module",
   "description": "Vaultify CLI — manage secrets from your terminal",
   "license": "MIT",
