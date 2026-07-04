@@ -12,9 +12,10 @@ import { Key, ArrowRight, Shield } from "lucide-react";
 interface ApiToken {
   id: string;
   name: string;
-  prefix: string;
+  tokenPrefix: string;
   createdAt: string;
   lastUsedAt?: string;
+  active: boolean;
 }
 
 interface EnrichedToken extends ApiToken {
@@ -186,8 +187,11 @@ export function ApiTokenUsage({ workspaces }: ApiTokenUsageProps) {
 
         if (cancelled) return;
 
+        // Filter out revoked tokens (active === false)
+        const activeTokens = allTokens.filter((t) => t.active);
+
         // Sort by lastUsedAt desc (tokens with lastUsedAt first, then by date)
-        allTokens.sort((a, b) => {
+        activeTokens.sort((a, b) => {
           if (!a.lastUsedAt && !b.lastUsedAt)
             return (
               new Date(b.createdAt).getTime() -
@@ -201,7 +205,7 @@ export function ApiTokenUsage({ workspaces }: ApiTokenUsageProps) {
           );
         });
 
-        setTokens(allTokens);
+        setTokens(activeTokens);
       } catch {
         // Graceful degradation
       } finally {
@@ -271,7 +275,7 @@ export function ApiTokenUsage({ workspaces }: ApiTokenUsageProps) {
                   </div>
                   <div className="mt-1 flex items-center gap-2">
                     <code className="text-[10px] font-mono text-text-muted/70">
-                      {maskPrefix(t.prefix)}
+                      {maskPrefix(t.tokenPrefix)}
                     </code>
                   </div>
                 </div>
