@@ -232,7 +232,7 @@ Interactive login with method selection:
       console.log('  ' + chalk.bold('2') + '  ' + chalk.white('API Token') + chalk.dim('      — for GitHub OAuth users or CI/CD'));
       console.log();
       console.log(chalk.dim('  Don\'t have a token? Create one from the dashboard:'));
-      console.log(chalk.dim('  ') + chalk.cyan('https://vaultify.io/dashboard/settings'));
+      console.log(chalk.dim('  ') + chalk.cyan('https://vaultiify.vercel.app/dashboard/settings'));
       console.log();
 
       const method = await promptInput(chalk.bold('  Select method [1/2]: '));

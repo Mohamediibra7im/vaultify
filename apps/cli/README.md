@@ -1,4 +1,4 @@
-# @vaultify/cli
+# @vaultiify/cli
 
 **Vaultify CLI** — manage secrets from your terminal.
 
