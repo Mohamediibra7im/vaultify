@@ -45,7 +45,7 @@ export function printHeader(): void {
     brand.primary('  ╭─────────────────────────────╮'),
   );
   console.log(
-    brand.primary('  │') +
+    brand.primary('   │') +
     '  ' + brand.primary.bold('vlt-cli') + brand.dim(' · Vaultify CLI') +
     '   ' + brand.primary('│'),
   );

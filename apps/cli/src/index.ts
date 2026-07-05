@@ -838,55 +838,88 @@ async function main(): Promise<void> {
     return;
   }
 
-  // ─── Interactive menu ────────────────────────────────────
+  // ─── Interactive menu (persistent loop) ──────────────────
   printHeader();
 
-  // Check auth status
-  const token = config.getToken();
-  if (token) {
-    hint(`Logged in ${brand.dim('·')} ${brand.dim(config.getApiUrl())}`);
-  } else {
-    hint(`Not logged in ${brand.dim('·')} Run ${brand.primary('Login')} to get started`);
-  }
-  blank();
-
-  const command = await select({
-    message: 'What would you like to do?',
-    choices: [
-      ...(token
-        ? [
-            { name: `${icon.link}  Init (link project)`,      value: 'init'    as const, description: 'Link this directory to a workspace/project' },
-            { name: `${icon.arrow}  Pull secrets`,            value: 'pull'    as const, description: 'Export an environment as .env file' },
-            { name: `${icon.arrow}  Push secrets`,            value: 'push'    as const, description: 'Import a .env file into an environment' },
-            { name: `${icon.run}  Run with secrets`,          value: 'run'     as const, description: 'Run a command with injected env vars' },
-            { name: `${icon.folder}  Browse`,                 value: 'ls'      as const, description: 'List workspaces, projects, and secrets' },
-            { name: `${icon.diff}  Compare environments`,    value: 'diff'    as const, description: 'Diff secrets between two environments' },
-            { name: `${icon.shield}  Secrets`,                value: 'secrets' as const, description: 'Search or reveal a secret' },
-            { name: `${icon.team}  Members`,                  value: 'members' as const, description: 'View workspace members' },
-            { name: `${icon.key}  API Tokens`,                value: 'tokens'  as const, description: 'Create, list, or revoke API tokens' },
-            { name: `${icon.user}  Who am I?`,                value: 'whoami'  as const, description: 'Show current session info' },
-            { name: `${icon.logout}  Logout`,                 value: 'logout'  as const, description: 'Clear saved credentials' },
-          ]
-        : []),
-      ...(!token
-        ? [
-            { name: `${icon.lock}  Login`,   value: 'login' as const, description: 'Authenticate with Vaultify' },
-          ]
-        : [
-            { name: `${icon.lock}  Switch account`,   value: 'login' as const, description: 'Log in as a different user' },
-          ]),
-    ],
-    theme: menuTheme,
-  });
-
-  try {
-    await commandMap[command]();
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
+  while (true) {
+    // Check auth status each iteration (may change after login/logout)
+    const token = config.getToken();
+    if (token) {
+      hint(`Logged in ${brand.dim('·')} ${brand.dim(config.getApiUrl())}`);
+    } else {
+      hint(`Not logged in ${brand.dim('·')} Run ${brand.primary('Login')} to get started`);
+    }
     blank();
-    error(message);
+
+    let command: string;
+    try {
+      command = await select({
+        message: 'What would you like to do?',
+        choices: [
+          ...(token
+            ? [
+                { name: `${icon.link}  Init (link project)`,      value: 'init'    as const, description: 'Link this directory to a workspace/project' },
+                { name: `${icon.arrow}  Pull secrets`,            value: 'pull'    as const, description: 'Export an environment as .env file' },
+                { name: `${icon.arrow}  Push secrets`,            value: 'push'    as const, description: 'Import a .env file into an environment' },
+                { name: `${icon.run}  Run with secrets`,          value: 'run'     as const, description: 'Run a command with injected env vars' },
+                { name: `${icon.folder}  Browse`,                 value: 'ls'      as const, description: 'List workspaces, projects, and secrets' },
+                { name: `${icon.diff}  Compare environments`,    value: 'diff'    as const, description: 'Diff secrets between two environments' },
+                { name: `${icon.shield}  Secrets`,                value: 'secrets' as const, description: 'Search or reveal a secret' },
+                { name: `${icon.team}  Members`,                  value: 'members' as const, description: 'View workspace members' },
+                { name: `${icon.key}  API Tokens`,                value: 'tokens'  as const, description: 'Create, list, or revoke API tokens' },
+                { name: `${icon.user}  Who am I?`,                value: 'whoami'  as const, description: 'Show current session info' },
+                { name: `${icon.logout}  Logout`,                 value: 'logout'  as const, description: 'Clear saved credentials' },
+              ]
+            : []),
+          ...(!token
+            ? [
+                { name: `${icon.lock}  Login`,   value: 'login' as const, description: 'Authenticate with Vaultify' },
+              ]
+            : [
+                { name: `${icon.lock}  Switch account`,   value: 'login' as const, description: 'Log in as a different user' },
+              ]),
+          { name: `${brand.dim('✕  Exit')}`, value: 'exit' as const, description: 'Quit vlt-cli' },
+        ],
+        theme: menuTheme,
+      });
+    } catch {
+      // User pressed Ctrl+C during select
+      blank();
+      hint('Goodbye!');
+      blank();
+      process.exit(0);
+    }
+
+    if (command === 'exit') {
+      blank();
+      hint('Goodbye!');
+      blank();
+      process.exit(0);
+    }
+
+    // `run` spawns a child process and takes over — don't loop back
+    if (command === 'run') {
+      try {
+        await cmdRun();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        blank();
+        error(message);
+        blank();
+        process.exit(1);
+      }
+      return;
+    }
+
+    try {
+      await commandMap[command]();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      blank();
+      error(message);
+    }
+
     blank();
-    process.exit(1);
   }
 }
 
