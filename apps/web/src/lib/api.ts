@@ -28,7 +28,12 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     throw new Error(err.message || 'Request failed');
   }
 
-  return res.json();
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await res.text();
+  return text ? JSON.parse(text) : (undefined as T);
 }
 
 export const api = {
