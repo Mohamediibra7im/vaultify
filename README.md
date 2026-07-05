@@ -60,7 +60,7 @@ environment-level isolation.
 | **Click-to-reveal** | Values masked by default. Each reveal is audit-logged |
 | **Per-environment RBAC** | Override member roles at the environment level |
 | **GitHub OAuth** | One-click sign-in, or email/password |
-| **CLI tool** | `npm install -g @vaultiify/cli` — manage secrets from your terminal |
+| **CLI tool** | `npm install -g @vaultiify/cli` — interactive secrets management (`vlt-cli`) |
 
 ---
 
@@ -154,7 +154,7 @@ vaultify/
 ├── apps/
 │   ├── web/          Next.js 16 dashboard + public site
 │   ├── api/          NestJS 11 REST API + Prisma + PostgreSQL
-│   └── cli/          TypeScript CLI (Commander + Chalk)
+│   └── cli/          Interactive CLI (vlt-cli) — @inquirer/prompts + Chalk + Ora
 ├── packages/
 │   └── shared-types/ Shared DTOs, enums, types
 └── docs/

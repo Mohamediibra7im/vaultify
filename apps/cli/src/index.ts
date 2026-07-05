@@ -1,12 +1,36 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { createInterface } from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
-import { Command } from 'commander';
+import { spawn } from 'node:child_process';
+import { select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { config } from './config.js';
 import { VaultifyApi, apiPost } from './api.js';
+import {
+  pickWorkspace,
+  pickProject,
+  pickEnvironment,
+  pickContext,
+  askInput,
+  askPassword,
+  askConfirm,
+  type WorkspaceDto,
+  type ProjectDto,
+  type EnvironmentDto,
+} from './prompts.js';
+import {
+  brand,
+  icon,
+  printHeader,
+  spinner,
+  success,
+  error,
+  info,
+  hint,
+  divider,
+  blank,
+  printTable,
+} from './ui.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'));
 
@@ -19,476 +43,11 @@ interface UserDto {
   avatarUrl: string | null;
 }
 
-interface WorkspaceDto {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface ProjectDto {
-  id: string;
-  name: string;
-  workspaceId: string;
-}
-
-interface EnvironmentDto {
-  id: string;
-  projectId: string;
-  name: string;
-}
-
-interface ListWorkspaceDto extends WorkspaceDto {
-  _count?: { projects: number };
-}
-
-interface ListProjectDto extends ProjectDto {
-  _count?: { secrets: number; environments: number };
-}
-
-interface ListEnvironmentDto extends EnvironmentDto {
-  _count?: { secrets: number };
-}
-
 interface LoginResponse {
   token: string;
   user: UserDto;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────
-
-function getApi(): { api: VaultifyApi; token: string; apiUrl: string } {
-  const token = config.getToken();
-  const apiUrl = config.getApiUrl();
-
-  if (!token) {
-    console.error(
-      chalk.red('✘ Not logged in. Run'),
-      chalk.cyan('vaultify login <api-url>'),
-      chalk.red('or set'),
-      chalk.cyan('VAULTIFY_TOKEN'),
-      chalk.red('env var.'),
-    );
-    process.exit(1);
-  }
-
-  return { api: new VaultifyApi(apiUrl, token), token, apiUrl };
-}
-
-/** Prompt for password with hidden input. */
-async function promptPassword(question: string): Promise<string> {
-  output.write(question);
-
-  if (!input.isTTY) {
-    const rl = createInterface({ input, output });
-    const answer = await rl.question('');
-    rl.close();
-    return answer;
-  }
-
-  return new Promise<string>((resolve) => {
-    input.setRawMode(true);
-    input.resume();
-
-    const buf: string[] = [];
-
-    const handler = (chunk: Buffer) => {
-      const char = chunk.toString();
-
-      if (char === '\r' || char === '\n') {
-        input.removeListener('data', handler);
-        input.setRawMode(false);
-        input.pause();
-        output.write('\n');
-        resolve(buf.join(''));
-        return;
-      }
-
-      if (char === '\x03') {
-        // Ctrl+C — exit gracefully
-        input.removeListener('data', handler);
-        input.setRawMode(false);
-        input.pause();
-        process.exit(0);
-      }
-
-      if (char === '\x7f' || char === '\b') {
-        // Backspace
-        if (buf.length > 0) {
-          buf.pop();
-          output.write('\b \b');
-        }
-        return;
-      }
-
-      buf.push(char);
-      output.write('*');
-    };
-
-    input.on('data', handler);
-  });
-}
-
-async function promptInput(question: string): Promise<string> {
-  const rl = createInterface({ input, output });
-  const answer = await rl.question(question);
-  rl.close();
-  return answer;
-}
-
-// ponytail: Prisma Workspace has no slug field — match on name
-async function resolveWorkspaceSlug(api: VaultifyApi, slug: string): Promise<WorkspaceDto> {
-  const workspaces = await api.get<WorkspaceDto[]>('/workspaces');
-  const ws = workspaces.find((w) => w.name === slug);
-  if (!ws) {
-    throw new Error(`Workspace with name "${slug}" not found. Available: ${workspaces.map((w) => w.name).join(', ')}`);
-  }
-  return ws;
-}
-
-// ponytail: Resolve a single project from a workspace.
-// If projectName is provided, match by name (case-insensitive).
-// If omitted and exactly 1 project exists, use it.
-// If omitted and multiple projects exist, throw with guidance.
-async function resolveProject(api: VaultifyApi, workspaceId: string, projectName?: string): Promise<ProjectDto> {
-  const projects = await api.get<ProjectDto[]>(`/workspaces/${workspaceId}/projects`);
-  if (projects.length === 0) {
-    throw new Error(`No projects found in workspace ${workspaceId}`);
-  }
-  if (projectName) {
-    const match = projects.find((p) => p.name.toLowerCase() === projectName.toLowerCase());
-    if (!match) {
-      throw new Error(`Project "${projectName}" not found. Available: ${projects.map((p) => p.name).join(', ')}`);
-    }
-    return match;
-  }
-  if (projects.length === 1) {
-    return projects[0];
-  }
-  throw new Error(
-    `Workspace has ${projects.length} projects — use --project <name>. Available: ${projects.map((p) => p.name).join(', ')}`,
-  );
-}
-
-/** Resolve environment name to ID within a project. */
-async function resolveEnvironmentId(
-  api: VaultifyApi,
-  projectId: string,
-  envName: string,
-): Promise<string> {
-  const envs = await api.get<EnvironmentDto[]>(`/projects/${projectId}/environments`);
-  const env = envs.find((e) => e.name === envName);
-  if (!env) {
-    const names = envs.map((e) => e.name).join(', ');
-    throw new Error(`Environment "${envName}" not found. Available: ${names}`);
-  }
-  return env.id;
-}
-
-// ─── Program ─────────────────────────────────────────────────
-
-const program = new Command();
-
-program
-  .name('vaultify')
-  .version(pkg.version)
-  .description(chalk.bold('Vaultify CLI — manage secrets from your terminal'));
-
-// ─── login ───────────────────────────────────────────────────
-const DEFAULT_API_URL = 'https://vaultify-api.vercel.app/api';
-
-program
-  .command('login')
-  .description('Authenticate with Vaultify')
-  .argument('[api-url]', 'API base URL (default: https://vaultify-api.vercel.app/api)', DEFAULT_API_URL)
-  .option('--token <token>', 'Skip interactive login — save an API token directly')
-  .addHelpText(
-    'after',
-    `
-Interactive login with method selection:
-
-  vaultify login                         → uses default API URL
-  vaultify login https://my-api.com/api  → uses custom URL
-  vaultify login --token <token>         → save token directly (for CI/CD)
-
-  API tokens can be created from the Vaultify dashboard:
-    Settings → API Tokens → Create Token
-
-  Or set env vars instead of logging in:
-    export VAULTIFY_TOKEN=your-token
-    export VAULTIFY_API_URL=https://vaultify-api.vercel.app/api
-`,
-  )
-  .action(async (apiUrl: string, opts: { token?: string }) => {
-    try {
-      // Save API URL first
-      config.setApiUrl(apiUrl);
-
-      // --token flag: skip interactive flow
-      if (opts.token) {
-        config.setToken(opts.token);
-        console.log();
-        console.log(chalk.green('✓ Token saved'));
-        console.log(chalk.dim('  API:'), apiUrl);
-        console.log();
-        return;
-      }
-
-      // Interactive login
-      console.log();
-      console.log(chalk.bold.cyan('🔐 Vaultify Login'));
-      console.log(chalk.dim('  API: ') + apiUrl);
-      console.log();
-      console.log(chalk.dim('  Choose login method:'));
-      console.log();
-      console.log('  ' + chalk.bold('1') + '  ' + chalk.white('Email & Password') + chalk.dim('  — login with your Vaultify account'));
-      console.log('  ' + chalk.bold('2') + '  ' + chalk.white('API Token') + chalk.dim('      — for GitHub OAuth users or CI/CD'));
-      console.log();
-      console.log(chalk.dim('  Don\'t have a token? Create one from the dashboard:'));
-      console.log(chalk.dim('  ') + chalk.cyan('https://vaultiify.vercel.app/dashboard/settings'));
-      console.log();
-
-      const method = await promptInput(chalk.bold('  Select method [1/2]: '));
-
-      if (method === '2' || method.toLowerCase() === 'token') {
-        console.log();
-        console.log(chalk.dim('  Paste your API token:'));
-        console.log(chalk.dim('  (create one at Settings → API Tokens in the dashboard)'));
-        console.log();
-        const token = await promptInput(chalk.bold('  Token: '));
-
-        if (!token.trim()) {
-          console.error(chalk.red('\n  ✘ Token cannot be empty'));
-          process.exit(1);
-        }
-
-        config.setToken(token.trim());
-        console.log();
-        console.log(chalk.green('  ✓ Token saved'));
-        console.log();
-      } else {
-        // Email/password login
-        console.log();
-        const email = await promptInput(chalk.bold('  Email: '));
-
-        if (!email.trim()) {
-          console.error(chalk.red('\n  ✘ Email cannot be empty'));
-          process.exit(1);
-        }
-
-        const password = await promptPassword(chalk.bold('  Password: '));
-
-        if (!password) {
-          console.error(chalk.red('\n  ✘ Password cannot be empty'));
-          process.exit(1);
-        }
-
-        console.log();
-        console.log(chalk.dim('  Authenticating…'));
-
-        const data = await apiPost<LoginResponse>(apiUrl, '/auth/login', {
-          email,
-          password,
-        });
-
-        config.setToken(data.token);
-
-        console.log();
-        console.log(chalk.green('  ✓ Logged in as'), chalk.bold(data.user.email));
-        console.log();
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`\n  ✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── whoami ──────────────────────────────────────────────────
-program
-  .command('whoami')
-  .description('Show current authenticated user info')
-  .addHelpText('after', '\nShows your Vaultify user profile and current API endpoint.\n')
-  .action(async () => {
-    try {
-      const { api, apiUrl } = getApi();
-      const user = await api.get<UserDto>('/auth/me');
-
-      console.log(chalk.bold('Authenticated as:'));
-      console.log(`  ${chalk.dim('ID:')}     ${user.id}`);
-      console.log(`  ${chalk.dim('Email:')}  ${user.email}`);
-      console.log(`  ${chalk.dim('Name:')}   ${user.name}`);
-      console.log(`  ${chalk.dim('API:')}    ${apiUrl}`);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── logout ──────────────────────────────────────────────────
-program
-  .command('logout')
-  .description('Clear saved session and API URL')
-  .addHelpText('after', '\nRemoves your stored token from ~/.vaultify/config.json.\n')
-  .action(() => {
-    config.clear();
-    console.log(chalk.green('✓ Logged out — session cleared'));
-  });
-
-// ─── pull ────────────────────────────────────────────────────
-program
-  .command('pull')
-  .description('Export secrets from an environment as .env file')
-  .argument('<workspace-slug>', 'Workspace slug (e.g. "my-team")')
-  .argument('<environment>', 'Environment name (e.g. "development")')
-  // ponytail: --project option for multi-project workspaces
-  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
-  .option('-o, --output <file>', 'Output file path (default: <environment>.env)', undefined)
-  .option('--resolve', 'Resolve secret references ({{ env.KEY }})')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify pull my-team production                   → writes production.env
-  vaultify pull my-team staging -o .env               → writes .env
-  vaultify pull my-team dev --resolve                 → resolve references
-  vaultify pull my-team production -p my-api          → select project by name
-`,
-  )
-  .action(async (workspaceSlug: string, environment: string, opts: { project?: string; output?: string; resolve?: boolean }) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      // ponytail: use resolveProject with optional --project name
-      const project = await resolveProject(api, ws.id, opts.project);
-      const envId = await resolveEnvironmentId(api, project.id, environment);
-
-      const qs = opts.resolve ? '?resolve=true' : '';
-      const text = await api.getText(`/environments/${envId}/secrets/export${qs}`);
-
-      const outFile = opts.output || `${environment}.env`;
-      await writeFile(outFile, text, 'utf-8');
-      console.log(chalk.green(`✓ Exported ${chalk.bold(environment)} secrets → ${chalk.bold(outFile)}`));
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── push ────────────────────────────────────────────────────
-program
-  .command('push')
-  .description('Import .env file into an environment')
-  .argument('<workspace-slug>', 'Workspace slug (e.g. "my-team")')
-  .argument('<environment>', 'Environment name (e.g. "development")')
-  .argument('[file]', 'Path to .env file (default: .env)', '.env')
-  // ponytail: --project option for multi-project workspaces
-  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify push my-team production                   → reads .env, imports to production
-  vaultify push my-team staging .env.prod             → reads .env.prod
-  vaultify push my-team production -p my-api          → select project by name
-`,
-  )
-  .action(async (workspaceSlug: string, environment: string, file: string, opts: { project?: string }) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      // ponytail: use resolveProject with optional --project name
-      const project = await resolveProject(api, ws.id, opts.project);
-      const envId = await resolveEnvironmentId(api, project.id, environment);
-
-      const fileContent = readFileSync(file, 'utf-8');
-      const result = await api.post<{ imported: number }>(`/environments/${envId}/secrets/import`, {
-        text: fileContent,
-      });
-
-      const count = result.imported ?? (Array.isArray(result) ? result.length : '?');
-      console.log(chalk.green(`✓ Imported ${chalk.bold(count)} secrets → ${chalk.bold(environment)}`));
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── ls ──────────────────────────────────────────────────────
-program
-  .command('ls')
-  .description('List workspaces, projects, or environments')
-  .argument('[slug]', 'Workspace slug to list projects under')
-  .argument('[environment]', 'Environment name to list secrets under (requires slug)')
-  // ponytail: --project option for multi-project workspaces
-  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify ls                                 → list workspaces
-  vaultify ls my-team                         → list projects in workspace
-  vaultify ls my-team production              → list secrets in environment
-  vaultify ls my-team production -p my-api    → select project by name
-`,
-  )
-  .action(async (slug?: string, environment?: string, opts?: { project?: string }) => {
-    try {
-      const { api } = getApi();
-
-      if (!slug) {
-        const workspaces = await api.get<ListWorkspaceDto[]>('/workspaces');
-        if (workspaces.length === 0) {
-          console.log(chalk.dim('No workspaces found.'));
-          return;
-        }
-        console.log(chalk.bold(`Workspaces (${workspaces.length}):`));
-        for (const ws of workspaces) {
-          const count = ws._count?.projects ?? '?';
-          console.log(`  ${chalk.cyan(ws.name.padEnd(20))} ${chalk.dim(`(${count} projects)`)}`);
-        }
-        return;
-      }
-
-      const ws = await resolveWorkspaceSlug(api, slug);
-
-      if (!environment) {
-        const projects = await api.get<ListProjectDto[]>(`/workspaces/${ws.id}/projects`);
-        if (projects.length === 0) {
-          console.log(chalk.dim(`No projects in ${chalk.bold(ws.name)}.`));
-          return;
-        }
-        console.log(chalk.bold(`Projects in ${ws.name} (${projects.length}):`));
-        for (const p of projects) {
-          const sCount = p._count?.secrets ?? '?';
-          const eCount = p._count?.environments ?? '?';
-          console.log(`  ${chalk.cyan(p.name.padEnd(20))} ${chalk.dim(`${sCount} secrets, ${eCount} environments`)}`);
-        }
-        return;
-      }
-
-      // ponytail: use resolveProject with optional --project name
-      const project = await resolveProject(api, ws.id, opts?.project);
-      const envId = await resolveEnvironmentId(api, project.id, environment);
-      const secrets = await api.get<Array<{ id: string; key: string; version: number }>>(`/environments/${envId}/secrets`);
-      if (secrets.length === 0) {
-        console.log(chalk.dim(`No secrets in ${environment}.`));
-        return;
-      }
-      console.log(chalk.bold(`Secrets in ${ws.name} / ${project.name} / ${environment} (${secrets.length}):`));
-      for (const s of secrets) {
-        console.log(`  ${chalk.green(s.key.padEnd(30))} ${chalk.dim(`v${s.version}`)}`);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── token ────────────────────────────────────────────────────
 interface ApiTokenDto {
   id: string;
   name: string;
@@ -503,148 +62,6 @@ interface CreateApiTokenDto extends ApiTokenDto {
   rawToken?: string;
 }
 
-const tokenCmd = program
-  .command('token')
-  .description('Manage API tokens for CI/CD');
-
-tokenCmd
-  .command('create')
-  .description('Create a new API token')
-  .argument('<workspace-slug>', 'Workspace slug')
-  .argument('<name>', 'Token name')
-  .addHelpText('after', '\nThe raw token is shown only once on creation.\n')
-  .action(async (workspaceSlug: string, name: string) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const result = await api.post<CreateApiTokenDto>(`/workspaces/${ws.id}/tokens`, { name });
-      console.log(chalk.green('✓ Token created:'));
-      console.log(`  ${chalk.dim('Name:')}      ${result.name}`);
-      console.log(`  ${chalk.dim('Prefix:')}    ${result.tokenPrefix}`);
-      if (result.rawToken) {
-        console.log(`  ${chalk.bold.yellow('Token:')}     ${chalk.bold(result.rawToken)}`);
-        console.log(chalk.yellow('  ⚠  This will not be shown again. Store it safely.'));
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-tokenCmd
-  .command('ls')
-  .description('List API tokens for a workspace')
-  .argument('<workspace-slug>', 'Workspace slug')
-  .action(async (workspaceSlug: string) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const tokens = await api.get<ApiTokenDto[]>(`/workspaces/${ws.id}/tokens`);
-      if (tokens.length === 0) {
-        console.log(chalk.dim('No API tokens for this workspace.'));
-        return;
-      }
-      console.log(chalk.bold(`API tokens for ${ws.name}:`));
-      for (const t of tokens) {
-        const status = t.active ? chalk.green('active') : chalk.red('revoked');
-        const lastUsed = t.lastUsedAt ? new Date(t.lastUsedAt).toLocaleDateString() : 'never';
-        console.log(`  ${chalk.cyan(t.name.padEnd(20))} ${status}  prefix: ${t.tokenPrefix}  last used: ${lastUsed}`);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-tokenCmd
-  .command('revoke')
-  .description('Revoke (deactivate) an API token')
-  .argument('<workspace-slug>', 'Workspace slug')
-  .argument('<token-id>', 'Token ID to revoke')
-  .action(async (workspaceSlug: string, tokenId: string) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      await api.del(`/workspaces/${ws.id}/tokens/${tokenId}`);
-      console.log(chalk.green('✓ Token revoked'));
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── diff ──────────────────────────────────────────────────────
-program
-  .command('diff')
-  .description('Compare secrets between two environments')
-  .argument('<workspace-slug>', 'Workspace slug')
-  .argument('<env1>', 'First environment name')
-  .argument('<env2>', 'Second environment name')
-  // ponytail: --project option for multi-project workspaces
-  .option('-p, --project <name>', 'Project name (required when workspace has multiple projects)')
-  .option('--values', 'Include decrypted values (requires EDITOR+ role)')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify diff my-team staging production
-  vaultify diff my-team dev staging --values
-  vaultify diff my-team staging production -p my-api
-`,
-  )
-  .action(async (workspaceSlug: string, env1: string, env2: string, opts: { project?: string; values?: boolean }) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      // ponytail: use resolveProject with optional --project name
-      const project = await resolveProject(api, ws.id, opts.project);
-      const env1Id = await resolveEnvironmentId(api, project.id, env1);
-      const env2Id = await resolveEnvironmentId(api, project.id, env2);
-
-      const qs = `?id1=${env1Id}&id2=${env2Id}${opts.values ? '&includeValues=true' : ''}`;
-      const diff = await api.get<{
-        onlyInA: Array<{ key: string; value?: string }>;
-        onlyInB: Array<{ key: string; value?: string }>;
-        common: Array<{ key: string; same: boolean; valueA?: string; valueB?: string }>;
-      }>(`/projects/${project.id}/environments/diff${qs}`);
-
-      console.log(chalk.bold(`Diff: ${env1} ↔ ${env2}`));
-
-      console.log(chalk.bold(`\n  Only in ${chalk.green(env1)} (${diff.onlyInA.length}):`));
-      for (const item of diff.onlyInA) {
-        const val = item.value ? ` = ${item.value}` : '';
-        console.log(`    ${chalk.green(item.key)}${chalk.dim(val)}`);
-      }
-
-      console.log(chalk.bold(`\n  Only in ${chalk.cyan(env2)} (${diff.onlyInB.length}):`));
-      for (const item of diff.onlyInB) {
-        const val = item.value ? ` = ${item.value}` : '';
-        console.log(`    ${chalk.cyan(item.key)}${chalk.dim(val)}`);
-      }
-
-      const changed = diff.common.filter((c) => !c.same);
-      const same = diff.common.filter((c) => c.same);
-      console.log(chalk.bold(`\n  Changed (${changed.length}):`));
-      for (const item of changed) {
-        const vA = item.valueA ? ` (${item.valueA})` : '';
-        const vB = item.valueB ? ` (${item.valueB})` : '';
-        console.log(`    ${chalk.yellow(item.key)}  ${env1}:${chalk.dim(vA)}  →  ${env2}:${chalk.dim(vB)}`);
-      }
-
-      if (same.length > 0) {
-        console.log(chalk.dim(`\n  Unchanged: ${same.length} keys`));
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
-  });
-
-// ─── members ───────────────────────────────────────────────────
 interface MemberDto {
   id: string;
   role: string;
@@ -655,108 +72,822 @@ interface MemberDto {
   };
 }
 
-program
-  .command('members')
-  .description('List workspace members')
-  .argument('<workspace-slug>', 'Workspace slug')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify members my-team
-`,
-  )
-  .action(async (workspaceSlug: string) => {
-    try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const members = await api.get<MemberDto[]>(`/workspaces/${ws.id}/members`);
+// ─── Helpers ─────────────────────────────────────────────────
 
-      if (members.length === 0) {
-        console.log(chalk.dim('No members found.'));
-        return;
-      }
+function getApi(): { api: VaultifyApi; token: string; apiUrl: string } {
+  const token = config.getToken();
+  const apiUrl = config.getApiUrl();
 
-      console.log(chalk.bold(`Members of ${ws.name} (${members.length}):`));
-      for (const m of members) {
-        const roleColor = m.role === 'OWNER' ? chalk.yellow : m.role === 'EDITOR' ? chalk.green : chalk.dim;
-        console.log(`  ${roleColor(m.role.padEnd(10))} ${chalk.bold(m.user.name.padEnd(20))} ${chalk.dim(m.user.email)}`);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
-    }
+  if (!token) {
+    blank();
+    error('Not logged in.');
+    hint(`Run ${brand.primary('vlt-cli')} and select ${brand.white.bold('Login')} to get started.`);
+    hint(`Or set the ${brand.primary('VAULTIFY_TOKEN')} environment variable.`);
+    blank();
+    process.exit(1);
+  }
+
+  return { api: new VaultifyApi(apiUrl, token), token, apiUrl };
+}
+
+const DEFAULT_API_URL = 'https://vaultify-api.vercel.app/api';
+
+// ─── Theme for top-level select ──────────────────────────────
+
+const menuTheme = {
+  prefix: {
+    idle: brand.primary('❯'),
+    done: brand.accent('✓'),
+  },
+  style: {
+    answer: (text: string) => brand.primary.bold(text),
+    message: (text: string) => brand.white.bold(text),
+    highlight: (text: string) => brand.primary.bold(text),
+  },
+};
+
+// ─── Commands ────────────────────────────────────────────────
+
+async function cmdLogin(): Promise<void> {
+  blank();
+  console.log(`  ${icon.lock} ${brand.white.bold('Login to Vaultify')}`);
+  blank();
+
+  const method = await select({
+    message: 'How would you like to authenticate?',
+    choices: [
+      {
+        name: `${icon.user}  Email & Password`,
+        value: 'email' as const,
+        description: 'Sign in with your Vaultify account',
+      },
+      {
+        name: `${icon.key}  API Token`,
+        value: 'token' as const,
+        description: 'Paste a token from the dashboard (for OAuth users or CI/CD)',
+      },
+    ],
+    theme: menuTheme,
   });
 
-// ─── secrets ───────────────────────────────────────────────────
-const secretsCmd = program
-  .command('secrets')
-  .description('Search, reveal, and manage secrets');
+  const useCustomUrl = await askConfirm('Use custom API URL?', false);
+  const apiUrl = useCustomUrl
+    ? await askInput('API URL', DEFAULT_API_URL)
+    : DEFAULT_API_URL;
 
-secretsCmd
-  .command('search')
-  .description('Search secrets across a workspace')
-  .argument('<workspace-slug>', 'Workspace slug')
-  .argument('<query>', 'Search query (matches key names)')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify secrets search my-team DATABASE
-  vaultify secrets search my-team API_KEY
-`,
-  )
-  .action(async (workspaceSlug: string, query: string) => {
+  config.setApiUrl(apiUrl);
+
+  if (method === 'token') {
+    blank();
+    hint(`Create tokens at: ${brand.secondary('https://vaultiify.vercel.app/dashboard/settings')}`);
+    blank();
+    const token = await askInput('Paste your API token');
+
+    if (!token) {
+      error('Token cannot be empty');
+      process.exit(1);
+    }
+
+    config.setToken(token);
+    blank();
+    success('Token saved');
+    info('API', apiUrl);
+    blank();
+  } else {
+    const email = await askInput('Email');
+    if (!email) {
+      error('Email cannot be empty');
+      process.exit(1);
+    }
+
+    const pwd = await askPassword('Password');
+    if (!pwd) {
+      error('Password cannot be empty');
+      process.exit(1);
+    }
+
+    const spin = spinner('Authenticating…');
     try {
-      const { api } = getApi();
-      const ws = await resolveWorkspaceSlug(api, workspaceSlug);
-      const results = await api.post<Array<{
+      const data = await apiPost<LoginResponse>(apiUrl, '/auth/login', {
+        email,
+        password: pwd,
+      });
+      spin.stop();
+
+      config.setToken(data.token);
+      blank();
+      success(`Logged in as ${brand.white.bold(data.user.email)}`);
+      info('API', apiUrl);
+      blank();
+    } catch (err) {
+      spin.stop();
+      throw err;
+    }
+  }
+}
+
+async function cmdLogout(): Promise<void> {
+  const confirmed = await askConfirm('Log out and clear saved credentials?');
+  if (confirmed) {
+    config.clear();
+    blank();
+    success('Logged out — session cleared');
+    blank();
+  }
+}
+
+async function cmdWhoami(): Promise<void> {
+  const { api, apiUrl } = getApi();
+  const spin = spinner('Fetching profile…');
+  const user = await api.get<UserDto>('/auth/me');
+  spin.stop();
+
+  blank();
+  console.log(`  ${icon.user} ${brand.white.bold('Current Session')}`);
+  blank();
+  info('Name', user.name);
+  info('Email', user.email);
+  info('ID', brand.dim(user.id));
+  info('API', apiUrl);
+  blank();
+}
+
+async function cmdPull(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.arrow} ${brand.white.bold('Pull Secrets')}`);
+  blank();
+
+  const { environment } = await pickContext(api);
+  if (!environment) return;
+
+  const resolve = await askConfirm('Resolve secret references ({{ env.KEY }})?', false);
+  const defaultOut = `${environment.name}.env`;
+  const outFile = await askInput('Output file', defaultOut);
+
+  const spin = spinner('Downloading secrets…');
+  const qs = resolve ? '?resolve=true' : '';
+  const text = await api.getText(`/environments/${environment.id}/secrets/export${qs}`);
+  spin.stop();
+
+  await writeFile(outFile, text, 'utf-8');
+  blank();
+  success(`Exported ${brand.white.bold(environment.name)} secrets → ${brand.primary.bold(outFile)}`);
+  blank();
+}
+
+async function cmdPush(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.arrow} ${brand.white.bold('Push Secrets')}`);
+  blank();
+
+  const { environment } = await pickContext(api);
+  if (!environment) return;
+
+  const file = await askInput('Path to .env file', '.env');
+
+  let fileContent: string;
+  try {
+    fileContent = readFileSync(file, 'utf-8');
+  } catch {
+    error(`Could not read file: ${file}`);
+    process.exit(1);
+  }
+
+  const lines = fileContent.split('\n').filter((l) => l.trim() && !l.startsWith('#')).length;
+  const confirmed = await askConfirm(
+    `Import ${brand.primary.bold(String(lines))} vars from ${brand.white.bold(file)} into ${brand.primary.bold(environment.name)}?`,
+  );
+  if (!confirmed) return;
+
+  const spin = spinner('Uploading secrets…');
+  const result = await api.post<{ imported: number }>(`/environments/${environment.id}/secrets/import`, {
+    text: fileContent,
+  });
+  spin.stop();
+
+  const count = result.imported ?? (Array.isArray(result) ? result.length : '?');
+  blank();
+  success(`Imported ${brand.white.bold(String(count))} secrets → ${brand.primary.bold(environment.name)}`);
+  blank();
+}
+
+async function cmdList(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.folder} ${brand.white.bold('Browse Resources')}`);
+  blank();
+
+  const scope = await select({
+    message: 'What do you want to list?',
+    choices: [
+      { name: 'Workspaces', value: 'workspaces' as const },
+      { name: 'Projects in a workspace', value: 'projects' as const },
+      { name: 'Secrets in an environment', value: 'secrets' as const },
+    ],
+    theme: menuTheme,
+  });
+
+  if (scope === 'workspaces') {
+    const spin = spinner('Fetching workspaces…');
+    const workspaces = await api.get<WorkspaceDto[]>('/workspaces');
+    spin.stop();
+
+    if (workspaces.length === 0) {
+      hint('No workspaces found.');
+      blank();
+      return;
+    }
+
+    blank();
+    printTable(
+      ['Workspace', 'Projects'],
+      workspaces.map((w) => [
+        brand.primary(w.name),
+        brand.dim(String(w._count?.projects ?? '—')),
+      ]),
+    );
+    blank();
+  } else if (scope === 'projects') {
+    const ws = await pickWorkspace(api);
+    const spin = spinner('Fetching projects…');
+    const projects = await api.get<(ProjectDto & { _count?: { secrets: number; environments: number } })[]>(
+      `/workspaces/${ws.id}/projects`,
+    );
+    spin.stop();
+
+    if (projects.length === 0) {
+      hint(`No projects in ${ws.name}.`);
+      blank();
+      return;
+    }
+
+    blank();
+    printTable(
+      ['Project', 'Secrets', 'Environments'],
+      projects.map((p) => [
+        brand.primary(p.name),
+        brand.dim(String(p._count?.secrets ?? '—')),
+        brand.dim(String(p._count?.environments ?? '—')),
+      ]),
+    );
+    blank();
+  } else {
+    const { environment, project, workspace } = await pickContext(api);
+    if (!environment) return;
+
+    const spin = spinner('Fetching secrets…');
+    const secrets = await api.get<Array<{ id: string; key: string; version: number }>>(
+      `/environments/${environment.id}/secrets`,
+    );
+    spin.stop();
+
+    if (secrets.length === 0) {
+      hint(`No secrets in ${environment.name}.`);
+      blank();
+      return;
+    }
+
+    blank();
+    console.log(`  ${brand.dim(`${workspace.name} / ${project.name} / ${environment.name}`)}`);
+    blank();
+    printTable(
+      ['Key', 'Version'],
+      secrets.map((s) => [brand.accent(s.key), brand.dim(`v${s.version}`)]),
+    );
+    blank();
+  }
+}
+
+async function cmdDiff(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${brand.white.bold('⇄  Compare Environments')}`);
+  blank();
+
+  const ws = await pickWorkspace(api);
+  const project = await pickProject(api, ws.id);
+
+  console.log(`  ${brand.dim('Select the two environments to compare:')}`);
+  blank();
+
+  const spin1 = spinner('Fetching environments…');
+  const envs = await api.get<EnvironmentDto[]>(`/projects/${project.id}/environments`);
+  spin1.stop();
+
+  if (envs.length < 2) {
+    error('Need at least 2 environments to compare.');
+    blank();
+    return;
+  }
+
+  const env1 = await select({
+    message: 'First environment',
+    choices: envs.map((e) => ({ name: e.name, value: e })),
+    theme: menuTheme,
+  });
+
+  const env2 = await select({
+    message: 'Second environment',
+    choices: envs.filter((e) => e.id !== env1.id).map((e) => ({ name: e.name, value: e })),
+    theme: menuTheme,
+  });
+
+  const includeValues = await askConfirm('Include decrypted values?', false);
+
+  const spin2 = spinner('Comparing…');
+  const qs = `?id1=${env1.id}&id2=${env2.id}${includeValues ? '&includeValues=true' : ''}`;
+  const diff = await api.get<{
+    onlyInA: Array<{ key: string; value?: string }>;
+    onlyInB: Array<{ key: string; value?: string }>;
+    common: Array<{ key: string; same: boolean; valueA?: string; valueB?: string }>;
+  }>(`/projects/${project.id}/environments/diff${qs}`);
+  spin2.stop();
+
+  blank();
+  console.log(`  ${brand.white.bold(`${env1.name}  ↔  ${env2.name}`)}`);
+  divider();
+
+  if (diff.onlyInA.length > 0) {
+    blank();
+    console.log(`  ${brand.accent(`Only in ${env1.name}`)} ${brand.dim(`(${diff.onlyInA.length})`)}`);
+    for (const item of diff.onlyInA) {
+      const val = item.value ? brand.dim(` = ${item.value}`) : '';
+      console.log(`    ${brand.accent('+')} ${brand.white(item.key)}${val}`);
+    }
+  }
+
+  if (diff.onlyInB.length > 0) {
+    blank();
+    console.log(`  ${brand.secondary(`Only in ${env2.name}`)} ${brand.dim(`(${diff.onlyInB.length})`)}`);
+    for (const item of diff.onlyInB) {
+      const val = item.value ? brand.dim(` = ${item.value}`) : '';
+      console.log(`    ${brand.secondary('+')} ${brand.white(item.key)}${val}`);
+    }
+  }
+
+  const changed = diff.common.filter((c) => !c.same);
+  const same = diff.common.filter((c) => c.same);
+
+  if (changed.length > 0) {
+    blank();
+    console.log(`  ${brand.warn('Changed')} ${brand.dim(`(${changed.length})`)}`);
+    for (const item of changed) {
+      const vA = item.valueA ? brand.dim(` ${item.valueA}`) : '';
+      const vB = item.valueB ? brand.dim(` ${item.valueB}`) : '';
+      console.log(`    ${brand.warn('~')} ${brand.white(item.key)}${vA} ${brand.dim('→')}${vB}`);
+    }
+  }
+
+  if (same.length > 0) {
+    blank();
+    hint(`Unchanged: ${same.length} keys`);
+  }
+
+  blank();
+}
+
+async function cmdMembers(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.team} ${brand.white.bold('Workspace Members')}`);
+  blank();
+
+  const ws = await pickWorkspace(api);
+
+  const spin = spinner('Fetching members…');
+  const members = await api.get<MemberDto[]>(`/workspaces/${ws.id}/members`);
+  spin.stop();
+
+  if (members.length === 0) {
+    hint('No members found.');
+    blank();
+    return;
+  }
+
+  blank();
+  printTable(
+    ['Role', 'Name', 'Email'],
+    members.map((m) => {
+      const roleColor =
+        m.role === 'OWNER' ? brand.warn : m.role === 'EDITOR' ? brand.accent : brand.dim;
+      return [roleColor(m.role), brand.white(m.user.name), brand.dim(m.user.email)];
+    }),
+  );
+  blank();
+}
+
+async function cmdTokens(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.key} ${brand.white.bold('API Tokens')}`);
+  blank();
+
+  const action = await select({
+    message: 'What would you like to do?',
+    choices: [
+      { name: 'List tokens', value: 'list' as const },
+      { name: 'Create new token', value: 'create' as const },
+      { name: 'Revoke a token', value: 'revoke' as const },
+    ],
+    theme: menuTheme,
+  });
+
+  const ws = await pickWorkspace(api);
+
+  if (action === 'list') {
+    const spin = spinner('Fetching tokens…');
+    const tokens = await api.get<ApiTokenDto[]>(`/workspaces/${ws.id}/tokens`);
+    spin.stop();
+
+    if (tokens.length === 0) {
+      hint('No API tokens for this workspace.');
+      blank();
+      return;
+    }
+
+    blank();
+    printTable(
+      ['Name', 'Status', 'Prefix', 'Last Used'],
+      tokens.map((t) => {
+        const status = t.active ? brand.accent('active') : brand.error('revoked');
+        const lastUsed = t.lastUsedAt ? new Date(t.lastUsedAt).toLocaleDateString() : 'never';
+        return [brand.white(t.name), status, brand.dim(t.tokenPrefix), brand.dim(lastUsed)];
+      }),
+    );
+    blank();
+  } else if (action === 'create') {
+    const name = await askInput('Token name');
+    if (!name) {
+      error('Token name cannot be empty');
+      return;
+    }
+
+    const spin = spinner('Creating token…');
+    const result = await api.post<CreateApiTokenDto>(`/workspaces/${ws.id}/tokens`, { name });
+    spin.stop();
+
+    blank();
+    success('Token created');
+    info('Name', result.name);
+    info('Prefix', result.tokenPrefix);
+    if (result.rawToken) {
+      blank();
+      console.log(`  ${brand.warn.bold('Token')}  ${brand.white.bold(result.rawToken)}`);
+      blank();
+      console.log(`  ${icon.warn} ${brand.warn('This will not be shown again. Store it safely.')}`);
+    }
+    blank();
+  } else {
+    const spin = spinner('Fetching tokens…');
+    const tokens = await api.get<ApiTokenDto[]>(`/workspaces/${ws.id}/tokens`);
+    spin.stop();
+
+    const activeTokens = tokens.filter((t) => t.active);
+    if (activeTokens.length === 0) {
+      hint('No active tokens to revoke.');
+      blank();
+      return;
+    }
+
+    const tokenToRevoke = await select({
+      message: 'Select token to revoke',
+      choices: activeTokens.map((t) => ({
+        name: `${t.name} ${brand.dim(`(${t.tokenPrefix}…)`)}`,
+        value: t,
+      })),
+      theme: menuTheme,
+    });
+
+    const confirmed = await askConfirm(`Revoke token "${tokenToRevoke.name}"?`, false);
+    if (!confirmed) return;
+
+    const spin2 = spinner('Revoking…');
+    await api.del(`/workspaces/${ws.id}/tokens/${tokenToRevoke.id}`);
+    spin2.stop();
+
+    blank();
+    success('Token revoked');
+    blank();
+  }
+}
+
+async function cmdSecrets(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.shield} ${brand.white.bold('Secrets')}`);
+  blank();
+
+  const action = await select({
+    message: 'What would you like to do?',
+    choices: [
+      { name: 'Search secrets by key', value: 'search' as const },
+      { name: 'Reveal a secret value', value: 'reveal' as const },
+    ],
+    theme: menuTheme,
+  });
+
+  if (action === 'search') {
+    const ws = await pickWorkspace(api);
+    const query = await askInput('Search query (matches key names)');
+
+    const spin = spinner('Searching…');
+    const results = await api.post<
+      Array<{
         id: string;
         key: string;
         version: number;
         environment: { id: string; name: string; project: { name: string } };
-      }>>('/secrets/search', { workspaceId: ws.id, query });
+      }>
+    >('/secrets/search', { workspaceId: ws.id, query });
+    spin.stop();
 
-      if (results.length === 0) {
-        console.log(chalk.dim(`No secrets matching "${query}" in ${ws.name}.`));
-        return;
-      }
-
-      console.log(chalk.bold(`Secrets matching "${query}" (${results.length}):`));
-      for (const s of results) {
-        const env = s.environment;
-        console.log(`  ${chalk.green(s.key.padEnd(30))} ${chalk.dim(`${env.project.name} / ${env.name}`)}  v${s.version}`);
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
-      process.exit(1);
+    if (results.length === 0) {
+      hint(`No secrets matching "${query}".`);
+      blank();
+      return;
     }
+
+    blank();
+    printTable(
+      ['Key', 'Project / Env', 'Version'],
+      results.map((s) => [
+        brand.accent(s.key),
+        brand.dim(`${s.environment.project.name} / ${s.environment.name}`),
+        brand.dim(`v${s.version}`),
+      ]),
+    );
+    blank();
+  } else {
+    const secretId = await askInput('Secret ID');
+
+    const spin = spinner('Decrypting…');
+    const result = await api.post<{ id: string; key: string; value: string }>(
+      `/secrets/${secretId}/reveal`,
+    );
+    spin.stop();
+
+    blank();
+    info('Key', brand.white.bold(result.key));
+    info('Value', brand.accent(result.value));
+    blank();
+  }
+}
+
+// ─── init ────────────────────────────────────────────────────
+
+async function cmdInit(): Promise<void> {
+  const { api } = getApi();
+  blank();
+  console.log(`  ${icon.folder} ${brand.white.bold('Link this directory to a Vaultify project')}`);
+  blank();
+
+  const { workspace, project, environment } = await pickContext(api);
+
+  config.setProjectConfig({
+    workspaceId: workspace.id,
+    workspaceName: workspace.name,
+    projectId: project.id,
+    projectName: project.name,
+    environmentId: environment?.id,
+    environmentName: environment?.name,
   });
 
-secretsCmd
-  .command('reveal')
-  .description('Reveal a secret value')
-  .argument('<secret-id>', 'Secret ID')
-  .addHelpText(
-    'after',
-    `
-Examples:
-  vaultify secrets reveal <secret-id>
-`,
-  )
-  .action(async (secretId: string) => {
+  blank();
+  success(`Linked to ${brand.primary.bold(workspace.name)} / ${brand.primary.bold(project.name)}${environment ? ` / ${brand.primary.bold(environment.name)}` : ''}`);
+  info('Config', config.getProjectConfigPath());
+  hint('Add .vaultify.json to .gitignore');
+  blank();
+}
+
+// ─── run ─────────────────────────────────────────────────────
+
+async function cmdRun(): Promise<void> {
+  const { api } = getApi();
+
+  // Find the command after "--"
+  const rawArgs = process.argv.slice(2);
+  const ddIdx = rawArgs.indexOf('--');
+  const childArgs = ddIdx >= 0 ? rawArgs.slice(ddIdx + 1) : [];
+
+  if (childArgs.length === 0) {
+    blank();
+    error('No command specified. Usage: vlt-cli run -- <command>');
+    hint('Example: vlt-cli run -- npm start');
+    blank();
+    process.exit(1);
+  }
+
+  // Try project config first
+  let envId: string | undefined;
+  let envName: string | undefined;
+  const projCfg = config.getProjectConfig();
+
+  if (projCfg?.environmentId) {
+    envId = projCfg.environmentId;
+    envName = projCfg.environmentName;
+    console.log(`  ${icon.arrow} Using linked env: ${brand.primary.bold(envName || envId)}`);
+  } else {
+    blank();
+    console.log(`  ${icon.run} ${brand.white.bold('Run with secrets')}`);
+    blank();
+    const ctx = await pickContext(api);
+    envId = ctx.environment?.id;
+    envName = ctx.environment?.name;
+  }
+
+  if (!envId) {
+    error('No environment selected.');
+    process.exit(1);
+  }
+
+  const spin = spinner('Fetching secrets…');
+  const text = await api.getText(`/environments/${envId}/secrets/export?resolve=true`);
+  spin.stop();
+
+  // Parse .env text into key=value pairs
+  const envVars: Record<string, string> = {};
+  let count = 0;
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx < 0) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    let val = trimmed.slice(eqIdx + 1).trim();
+    // Strip surrounding quotes
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    envVars[key] = val;
+    count++;
+  }
+
+  blank();
+  success(`Injecting ${brand.white.bold(String(count))} secrets from ${brand.primary.bold(envName || 'environment')}`);
+  hint(`Running: ${brand.white(childArgs.join(' '))}`);
+  blank();
+
+  const child = spawn(childArgs[0], childArgs.slice(1), {
+    stdio: 'inherit',
+    env: { ...process.env, ...envVars },
+    shell: true,
+  });
+
+  child.on('close', (code) => {
+    process.exit(code ?? 0);
+  });
+
+  child.on('error', (err) => {
+    error(`Failed to start: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+// ─── Non-interactive fallback (CI/CD) ────────────────────────
+
+function runNonInteractive(args: string[]): boolean {
+  const cmd = args[0];
+
+  // Only support quick non-interactive shortcuts
+  if (cmd === '--version' || cmd === '-v' || cmd === '-V') {
+    console.log(pkg.version);
+    return true;
+  }
+
+  if (cmd === '--help' || cmd === '-h') {
+    printHeader();
+    console.log(brand.white.bold('  Usage'));
+    blank();
+    console.log(`  ${brand.primary('$')} vlt-cli              ${brand.dim('Interactive mode (recommended)')}`);
+    console.log(`  ${brand.primary('$')} vlt-cli ${brand.dim('<command>')}     ${brand.dim('Jump directly to a command')}`);
+    blank();
+    console.log(brand.white.bold('  Commands'));
+    blank();
+    const cmds = [
+      ['login', 'Authenticate with Vaultify'],
+      ['logout', 'Clear saved session'],
+      ['whoami', 'Show current user info'],
+      ['init', 'Link current dir to a project'],
+      ['pull', 'Export secrets as .env file'],
+      ['push', 'Import .env file into environment'],
+      ['run', 'Run a command with injected secrets'],
+      ['ls', 'Browse workspaces, projects, secrets'],
+      ['diff', 'Compare two environments'],
+      ['members', 'List workspace members'],
+      ['tokens', 'Manage API tokens'],
+      ['secrets', 'Search & reveal secrets'],
+    ];
+    for (const [name, desc] of cmds) {
+      console.log(`    ${brand.primary(name.padEnd(14))} ${brand.dim(desc)}`);
+    }
+    blank();
+    console.log(brand.white.bold('  Environment Variables'));
+    blank();
+    console.log(`    ${brand.primary('VAULTIFY_TOKEN')}     ${brand.dim('API token (overrides saved token)')}`);
+    console.log(`    ${brand.primary('VAULTIFY_API_URL')}   ${brand.dim('API base URL (overrides saved URL)')}`);
+    blank();
+    console.log(`  ${brand.dim(`v${pkg.version} · Config: ~/.vaultify/config.json`)}`);
+    blank();
+    return true;
+  }
+
+  return false;
+}
+
+// ─── Main ────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+
+  // Handle --version, --help
+  if (args.length > 0 && runNonInteractive(args)) {
+    return;
+  }
+
+  // Direct command jump: `vlt-cli pull`, `vlt-cli login`, etc.
+  const directCommand = args[0];
+  const commandMap: Record<string, () => Promise<void>> = {
+    login: cmdLogin,
+    logout: cmdLogout,
+    whoami: cmdWhoami,
+    init: cmdInit,
+    pull: cmdPull,
+    push: cmdPush,
+    run: cmdRun,
+    ls: cmdList,
+    list: cmdList,
+    diff: cmdDiff,
+    members: cmdMembers,
+    tokens: cmdTokens,
+    token: cmdTokens,
+    secrets: cmdSecrets,
+  };
+
+  if (directCommand && commandMap[directCommand]) {
     try {
-      const { api } = getApi();
-      const result = await api.post<{ id: string; key: string; value: string }>(`/secrets/${secretId}/reveal`);
-      console.log(`${chalk.bold(result.key)}:`);
-      console.log(`  ${chalk.green(result.value)}`);
+      await commandMap[directCommand]();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(chalk.red(`✘ ${message}`));
+      blank();
+      error(message);
+      blank();
       process.exit(1);
     }
+    return;
+  }
+
+  // ─── Interactive menu ────────────────────────────────────
+  printHeader();
+
+  // Check auth status
+  const token = config.getToken();
+  if (token) {
+    hint(`Logged in ${brand.dim('·')} ${brand.dim(config.getApiUrl())}`);
+  } else {
+    hint(`Not logged in ${brand.dim('·')} Run ${brand.primary('Login')} to get started`);
+  }
+  blank();
+
+  const command = await select({
+    message: 'What would you like to do?',
+    choices: [
+      ...(token
+        ? [
+            { name: `${icon.link}  Init (link project)`,      value: 'init'    as const, description: 'Link this directory to a workspace/project' },
+            { name: `${icon.arrow}  Pull secrets`,            value: 'pull'    as const, description: 'Export an environment as .env file' },
+            { name: `${icon.arrow}  Push secrets`,            value: 'push'    as const, description: 'Import a .env file into an environment' },
+            { name: `${icon.run}  Run with secrets`,          value: 'run'     as const, description: 'Run a command with injected env vars' },
+            { name: `${icon.folder}  Browse`,                 value: 'ls'      as const, description: 'List workspaces, projects, and secrets' },
+            { name: `${icon.diff}  Compare environments`,    value: 'diff'    as const, description: 'Diff secrets between two environments' },
+            { name: `${icon.shield}  Secrets`,                value: 'secrets' as const, description: 'Search or reveal a secret' },
+            { name: `${icon.team}  Members`,                  value: 'members' as const, description: 'View workspace members' },
+            { name: `${icon.key}  API Tokens`,                value: 'tokens'  as const, description: 'Create, list, or revoke API tokens' },
+            { name: `${icon.user}  Who am I?`,                value: 'whoami'  as const, description: 'Show current session info' },
+            { name: `${icon.logout}  Logout`,                 value: 'logout'  as const, description: 'Clear saved credentials' },
+          ]
+        : []),
+      ...(!token
+        ? [
+            { name: `${icon.lock}  Login`,   value: 'login' as const, description: 'Authenticate with Vaultify' },
+          ]
+        : [
+            { name: `${icon.lock}  Switch account`,   value: 'login' as const, description: 'Log in as a different user' },
+          ]),
+    ],
+    theme: menuTheme,
   });
 
-program.parse();
+  try {
+    await commandMap[command]();
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    blank();
+    error(message);
+    blank();
+    process.exit(1);
+  }
+}
+
+main();
