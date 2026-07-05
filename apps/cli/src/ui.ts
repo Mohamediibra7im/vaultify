@@ -37,8 +37,6 @@ export const icon = {
   logout: brand.dim('←'),
 };
 
-// ─── Header ──────────────────────────────────────────────────
-
 export function printHeader(): void {
   console.log();
   console.log(
@@ -47,7 +45,7 @@ export function printHeader(): void {
   console.log(
     brand.primary('  │') +
     '  ' + brand.primary.bold('vlt-cli') + brand.dim(' · Vaultify CLI') +
-    '   ' + brand.primary(' │'),
+    '     ' + brand.primary('│'),
   );
   console.log(
     brand.primary('  ╰─────────────────────────────╯'),
